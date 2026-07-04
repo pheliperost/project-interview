@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BlaInterview.Api.Shared\BlaInterview.Api.Shared.csproj" />
     <ProjectReference Include="..\BlaInterview.Infrastructure\BlaInterview.Infrastructure.csproj" />
   </ItemGroup>
 

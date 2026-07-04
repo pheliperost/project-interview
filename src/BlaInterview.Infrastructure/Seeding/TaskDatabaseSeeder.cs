@@ -1,39 +1,38 @@
 using BlaInterview.Domain.Entities;
 using BlaInterview.Domain.Enums;
-using BlaInterview.Infrastructure.Identity;
 using BlaInterview.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BlaInterview.Infrastructure.Seeding;
 
-public static class DatabaseSeeder
+public static class TaskDatabaseSeeder
 {
     public static async Task SeedAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
 
         await context.Database.MigrateAsync();
 
-        var demo = await EnsureUserAsync(userManager, "demo@bla.local", "Demo123!");
-        var other = await EnsureUserAsync(userManager, "other@bla.local", "Other123!");
+        var demo = await context.Users.FirstOrDefaultAsync(u => u.Email == UserDatabaseSeeder.DemoEmail);
+        var other = await context.Users.FirstOrDefaultAsync(u => u.Email == UserDatabaseSeeder.OtherEmail);
+
+        if (demo is null || other is null)
+        {
+            logger.LogWarning("Skipping task seeding — demo users not found. Start Auth API first.");
+            return;
+        }
 
         var seeded = 0;
 
         if (!await context.Tasks.AnyAsync(t => t.UserId == demo.Id))
-        {
             seeded += await SeedDemoUserTasksAsync(context, demo.Id);
-        }
 
         if (!await context.Tasks.AnyAsync(t => t.UserId == other.Id))
-        {
             seeded += await SeedOtherUserTasksAsync(context, other.Id);
-        }
 
         if (seeded > 0)
             logger.LogInformation("Database seeded with {Count} tasks.", seeded);
@@ -73,20 +72,6 @@ public static class DatabaseSeeder
         context.Tasks.AddRange(tasks);
         await context.SaveChangesAsync();
         return tasks.Count;
-    }
-
-    private static async Task<ApplicationUser> EnsureUserAsync(UserManager<ApplicationUser> userManager, string email, string password)
-    {
-        var user = await userManager.FindByEmailAsync(email);
-        if (user is not null)
-            return user;
-
-        user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
-        var result = await userManager.CreateAsync(user, password);
-        if (!result.Succeeded)
-            throw new InvalidOperationException(string.Join(' ', result.Errors.Select(e => e.Description)));
-
-        return user;
     }
 
     private static TaskItem CreateTask(string userId, string title, string? description, KanbanStatus status, TaskPriority priority, DateTimeOffset dueDate, DateTimeOffset now) => new()

@@ -6,6 +6,7 @@ using BlaInterview.Domain.Entities;
 using BlaInterview.Domain.Enums;
 using Bogus;
 using FluentValidation;
+using Moq;
 using Moq.AutoMock;
 
 namespace BlaInterview.Unit.Tests.Fixtures;

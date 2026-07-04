@@ -59,6 +59,35 @@ public class TaskRepositoryFixtures : IDisposable
             .Generate();
     }
 
+    public TaskItem GenerateTask(
+        string userId,
+        string title,
+        KanbanStatus status,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt,
+        DateTimeOffset? dueDate = null)
+    {
+        var task = GenerateTask(userId, title, status, createdAt);
+        task.CreatedAt = createdAt;
+        task.UpdatedAt = updatedAt;
+        task.DueDate = dueDate;
+        return task;
+    }
+
+    public async Task SeedDatedTasksAsync()
+    {
+        Context.Tasks.RemoveRange(Context.Tasks);
+        await Context.SaveChangesAsync();
+
+        var baseDate = new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero);
+        Context.Tasks.AddRange(
+            GenerateTask("user1", "Early task", KanbanStatus.Todo, baseDate.AddDays(-5), baseDate.AddDays(-5), baseDate.AddDays(1)),
+            GenerateTask("user1", "Late task", KanbanStatus.Todo, baseDate.AddDays(5), baseDate.AddDays(5), baseDate.AddDays(10)),
+            GenerateTask("user1", "No due date", KanbanStatus.Todo, baseDate, baseDate, null),
+            GenerateTask("user2", "Other user task", KanbanStatus.Todo, baseDate, baseDate, baseDate.AddDays(2)));
+        await Context.SaveChangesAsync();
+    }
+
     public void Dispose()
     {
         Context.Dispose();

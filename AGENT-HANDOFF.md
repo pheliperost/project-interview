@@ -14,11 +14,15 @@
 4. Run the app and tests before making non-trivial changes.
 
 ```powershell
-# API (from repo root)
-cd src/BlaInterview.Api
+# Auth API (from repo root) — start first
+cd src/BlaInterview.Auth.Api
 dotnet run
 
-# Frontend (separate terminal)
+# Tasks API (second terminal)
+cd src/BlaInterview.Tasks.Api
+dotnet run
+
+# Frontend (third terminal)
 cd client
 npm install
 npm run dev
@@ -26,8 +30,10 @@ npm run dev
 
 | Service | URL |
 |---------|-----|
-| API | http://localhost:5098 |
-| Swagger | http://localhost:5098/swagger |
+| Auth API | http://localhost:5098 |
+| Auth Swagger | http://localhost:5098/swagger |
+| Tasks API | http://localhost:5099 |
+| Tasks Swagger | http://localhost:5099/swagger |
 | App | http://localhost:5173 |
 
 **Demo login:** `demo@bla.local` / `Demo123!` → should show **8 seeded tasks**.
@@ -76,7 +82,7 @@ npm run dev
 - Machine has .NET 10 SDK only — targets `net10.0`, not net8. Patterns match exercise intent.
 - **PowerShell:** chain commands with `;`, not `&&`.
 
-**Last verified:** `dotnet test` (**24 pass** — 19 unit + 5 integration), `client/` `npm run build` (pass).
+**Last verified:** `dotnet test` (**79 pass** — 42 unit + 37 integration), `client/` `npm run build` (pass).
 
 ---
 
@@ -86,8 +92,10 @@ npm run dev
 src/
   BlaInterview.Domain/          # TaskItem, KanbanStatus, TaskPriority — no EF/Identity
   BlaInterview.Application/     # TaskService, validators, DTOs, TaskMapper
-  BlaInterview.Infrastructure/  # EF, Identity, JWT, TaskRepository, DatabaseSeeder
-  BlaInterview.Api/               # Controllers, Program.cs, Swagger
+  BlaInterview.Infrastructure/  # EF, Identity, JWT, TaskRepository, seeders
+  BlaInterview.Api.Shared/      # Shared HTTP middleware, Swagger, CORS helpers
+  BlaInterview.Auth.Api/        # Auth + health endpoints (port 5098)
+  BlaInterview.Tasks.Api/       # Task CRUD endpoints (port 5099)
 tests/
   BlaInterview.Unit.Tests/        # Domain + Application (Moq.AutoMock, Bogus, Theory/MemberData)
   BlaInterview.Integration.Tests/ # HTTP (WAF) + EF/SQLite repository (in-memory fake DB)
@@ -103,6 +111,7 @@ AGENT-HANDOFF.md
 ## Architectural decisions (already implemented)
 
 1. **Clean Architecture** — business logic in Application; thin controllers; no validation in controllers.
+2. **Two segregated APIs** — `Auth.Api` (identity + JWT issuance) and `Tasks.Api` (CRUD); shared JWT config via `JwtAuthenticationExtensions`.
 2. **`KanbanStatus` enum** (NOT `TaskStatus`) — avoids clash with `System.Threading.Tasks.TaskStatus`.
 3. **Manual `TaskMapper`** — AutoMapper removed/unused.
 4. **JWT in localStorage** — demo tradeoff documented in README (not HttpOnly cookies).
@@ -123,7 +132,7 @@ Segregated into **two assemblies** — unit vs integration — with shared colle
 | Folder | Purpose |
 |--------|---------|
 | `Domain/` | Pure entity tests (`TaskItemTests`) |
-| `Application/` | `TaskServiceTests` with Moq.AutoMock |
+| `Application/` | `TaskServiceTests`, `ValidatorTests`, `NotificationTests`, `TaskMapperTests` |
 | `Fixtures/` | `TaskServiceFixtures` + `DomainFixtures` (Bogus valid/invalid builders) |
 | `Data/` | `MemberData` providers (`TaskItemTerminalData`, `KanbanStatusTransitionData`) |
 
@@ -133,12 +142,12 @@ Patterns: `[Collection]` + `ICollectionFixture`, `[Trait("Category", ...)]`, `[F
 
 | Folder | Purpose |
 |--------|---------|
-| `Config/` | `BlaInterviewAppFactory`, `IntegrationTestsFixture` (shared `HttpClient`) |
-| `Api/` | `AuthTests`, `TaskTests` (split from former `ApiIntegrationTests`) |
+| `Config/` | `AuthAppFactory`, `TasksAppFactory`, `IntegrationTestsFixture` (shared temp SQLite DB) |
+| `Api/` | `AuthTests`, `AuthExtendedTests`, `TaskTests`, `TaskCrudTests`, `TaskQueryTests`, `TaskOwnershipTests` |
 | `Infrastructure/` | `TaskRepositoryTests` against **in-memory SQLite** (`:memory:`) |
 | `Fixtures/` | `TaskRepositoryFixtures` (fake DB + seed helpers) |
 
-**DB strategy:** Unit tests **fake** `ITaskRepository` via AutoMoq (no DB). Integration repository tests use **in-memory SQLite** (real EF, fake persistence). API tests use **WebApplicationFactory** + `test-api.db`.
+**DB strategy:** Unit tests **fake** `ITaskRepository` via AutoMoq (no DB). Integration repository tests use **in-memory SQLite** (real EF, fake persistence). API tests use **dual WebApplicationFactory** — login on Auth API, task calls on Tasks API, same DB file path.
 
 Filter integration tests by trait, e.g. `dotnet test --filter "Category=Task Service"`.
 
@@ -196,7 +205,7 @@ Frontend: `client/src/api/types.ts` (`COLUMNS`, `ALL_STATUSES`).
 - Runs at API startup in **Development** only (`Program.cs` → `DatabaseSeeder.SeedAsync`).
 - **Per-user:** seeds when that user has zero tasks (not a global "skip if any task exists").
 - **New registrations** → empty board.
-- DB file: `src/BlaInterview.Api/bla.db` — delete + restart API to force re-seed if demo board is stale.
+- DB file: `src/BlaInterview.Auth.Api/bla.db` — delete + restart Auth API (then Tasks API) to force re-seed if demo board is stale.
 
 **Demo task titles:** Plan sprint backlog, Refine API integration (Todo); Model training pipeline, Data node mapping (In Progress); Waiting on design assets (On Hold); Visual flow schema (In Review); Ship release notes (Completed); Deprecated feature cleanup (Cancelled).
 

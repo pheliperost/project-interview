@@ -1,4 +1,3 @@
-using BlaInterview.Application.Common;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Application.Interfaces;
 using BlaInterview.Application.Mapping;
@@ -7,7 +6,7 @@ using FluentValidation;
 
 namespace BlaInterview.Application.Services;
 
-public class TaskService : ITaskService
+public class TaskService : BaseService, ITaskService
 {
     private readonly ITaskRepository _repository;
     private readonly IValidator<CreateTaskRequest> _createValidator;
@@ -16,9 +15,11 @@ public class TaskService : ITaskService
 
     public TaskService(
         ITaskRepository repository,
+        INotifyer notifyer,
         IValidator<CreateTaskRequest> createValidator,
         IValidator<UpdateTaskRequest> updateValidator,
         IValidator<TaskFilterRequest> filterValidator)
+        : base(notifyer)
     {
         _repository = repository;
         _createValidator = createValidator;
@@ -26,23 +27,30 @@ public class TaskService : ITaskService
         _filterValidator = filterValidator;
     }
 
-    public async Task<TaskListResponse> GetTasksAsync(string userId, TaskFilterRequest filter, CancellationToken cancellationToken = default)
+    public async Task<TaskListResponse?> GetTasksAsync(string userId, TaskFilterRequest filter, CancellationToken cancellationToken = default)
     {
-        await ValidateAsync(_filterValidator, filter, cancellationToken);
+        if (!await ValidateAsync(_filterValidator, filter, cancellationToken))
+            return null;
+
         var query = TaskMapper.ToQuery(filter);
         var page = await _repository.GetByUserAsync(userId, query, cancellationToken);
         return TaskMapper.ToListResponse(page.Items, page.TotalCount, query.Page, query.PageSize);
     }
 
-    public async Task<TaskResponse> GetTaskByIdAsync(string userId, Guid id, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> GetTaskByIdAsync(string userId, Guid id, CancellationToken cancellationToken = default)
     {
         var task = await GetOwnedTaskAsync(userId, id, cancellationToken);
+        if (task is null)
+            return null;
+
         return TaskMapper.ToResponse(task);
     }
 
-    public async Task<TaskResponse> CreateTaskAsync(string userId, CreateTaskRequest request, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> CreateTaskAsync(string userId, CreateTaskRequest request, CancellationToken cancellationToken = default)
     {
-        await ValidateAsync(_createValidator, request, cancellationToken);
+        if (!await ValidateAsync(_createValidator, request, cancellationToken))
+            return null;
+
         var now = DateTimeOffset.UtcNow;
         var task = TaskMapper.CreateEntity(userId, request, now);
         await _repository.AddAsync(task, cancellationToken);
@@ -50,13 +58,20 @@ public class TaskService : ITaskService
         return TaskMapper.ToResponse(task);
     }
 
-    public async Task<TaskResponse> UpdateTaskAsync(string userId, Guid id, UpdateTaskRequest request, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> UpdateTaskAsync(string userId, Guid id, UpdateTaskRequest request, CancellationToken cancellationToken = default)
     {
-        await ValidateAsync(_updateValidator, request, cancellationToken);
+        if (!await ValidateAsync(_updateValidator, request, cancellationToken))
+            return null;
+
         var task = await GetOwnedTaskAsync(userId, id, cancellationToken);
+        if (task is null)
+            return null;
 
         if (task.IsTerminal && request.Status != task.Status)
-            throw new AppException("Terminal tasks cannot change status via update. Use reactivate.", 400);
+        {
+            Notify("Terminal tasks cannot change status via update. Use reactivate.");
+            return null;
+        }
 
         task.Title = request.Title;
         task.Description = request.Description;
@@ -73,16 +88,24 @@ public class TaskService : ITaskService
     public async Task DeleteTaskAsync(string userId, Guid id, CancellationToken cancellationToken = default)
     {
         var task = await GetOwnedTaskAsync(userId, id, cancellationToken);
+        if (task is null)
+            return;
+
         await _repository.DeleteAsync(task, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<TaskResponse> ReactivateAsync(string userId, Guid id, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> ReactivateAsync(string userId, Guid id, CancellationToken cancellationToken = default)
     {
         var task = await GetOwnedTaskAsync(userId, id, cancellationToken);
+        if (task is null)
+            return null;
 
         if (!task.IsTerminal)
-            throw new AppException("Only completed or cancelled tasks can be reactivated.", 400);
+        {
+            Notify("Only completed or cancelled tasks can be reactivated.");
+            return null;
+        }
 
         task.Status = KanbanStatus.Todo;
         task.UpdatedAt = DateTimeOffset.UtcNow;
@@ -91,22 +114,21 @@ public class TaskService : ITaskService
         return TaskMapper.ToResponse(task);
     }
 
-    private async Task<Domain.Entities.TaskItem> GetOwnedTaskAsync(string userId, Guid id, CancellationToken cancellationToken)
+    private async Task<Domain.Entities.TaskItem?> GetOwnedTaskAsync(string userId, Guid id, CancellationToken cancellationToken)
     {
         var task = await _repository.GetByIdAsync(id, cancellationToken);
         if (task is null)
-            throw new AppException("Task not found.", 404);
+        {
+            Notify("Task not found.", 404);
+            return null;
+        }
 
         if (task.UserId != userId)
-            throw new AppException("You do not have access to this task.", 403);
+        {
+            Notify("You do not have access to this task.", 403);
+            return null;
+        }
 
         return task;
-    }
-
-    private static async Task ValidateAsync<T>(IValidator<T> validator, T instance, CancellationToken cancellationToken)
-    {
-        var result = await validator.ValidateAsync(instance, cancellationToken);
-        if (!result.IsValid)
-            throw new AppException(string.Join(' ', result.Errors.Select(e => e.ErrorMessage)), 400);
     }
 }

@@ -23,7 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\BlaInterview.Api\BlaInterview.Api.csproj" />
+    <ProjectReference Include="..\..\src\BlaInterview.Auth.Api\BlaInterview.Auth.Api.csproj" />
+    <ProjectReference Include="..\..\src\BlaInterview.Tasks.Api\BlaInterview.Tasks.Api.csproj" />
     <ProjectReference Include="..\..\src\BlaInterview.Infrastructure\BlaInterview.Infrastructure.csproj" />
   </ItemGroup>
 

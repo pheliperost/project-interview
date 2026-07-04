@@ -1,0 +1,11 @@
+{
+  "Jwt": {
+    "Secret": "SimpleTasksDevSecretKey_ChangeInProduction_32chars!"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}

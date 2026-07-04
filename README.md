@@ -31,24 +31,37 @@ See [docs/user-stories.md](docs/user-stories.md) for scoped stories S1–S7.
 For local development, copy the example settings file so the API can sign JWTs:
 
 ```bash
-cd src/BlaInterview.Api
+cd src/BlaInterview.Auth.Api
 cp appsettings.Development.json.example appsettings.Development.json   # PowerShell: Copy-Item ...
+
+cd ../BlaInterview.Tasks.Api
+cp appsettings.Development.json.example appsettings.Development.json
 ```
 
-`appsettings.Development.json` is gitignored. The committed `appsettings.json` uses a non-functional placeholder JWT secret — **the API will not issue valid tokens until you add `appsettings.Development.json` or set `Jwt__Secret` in the environment** (minimum 32 characters).
+`appsettings.Development.json` is gitignored on both APIs. The committed `appsettings.json` uses a non-functional placeholder JWT secret — **tokens will not work until both APIs share the same `Jwt:Secret`** (minimum 32 characters) via Development settings or `Jwt__Secret` env var.
 
 Integration tests inject their own in-memory JWT settings and do not need this file.
 
-## Run the API
+## Run the APIs
+
+Start **Auth API first** (creates users), then **Tasks API** (seeds tasks).
 
 ```bash
-cd src/BlaInterview.Api
+cd src/BlaInterview.Auth.Api
 dotnet run
 ```
 
-- API: http://localhost:5098
-- Swagger: http://localhost:5098/swagger
-- SQLite DB: `src/BlaInterview.Api/bla.db` (auto-migrated and seeded in Development)
+```bash
+cd src/BlaInterview.Tasks.Api
+dotnet run
+```
+
+| API | URL | Swagger |
+|-----|-----|---------|
+| Auth | http://localhost:5098 | http://localhost:5098/swagger |
+| Tasks | http://localhost:5099 | http://localhost:5099/swagger |
+
+- SQLite DB: `src/BlaInterview.Auth.Api/bla.db` (shared by both APIs)
 
 ## Run the frontend
 
@@ -58,7 +71,7 @@ npm install
 npm run dev
 ```
 
-- App: http://localhost:5173 (proxies `/api` to the backend)
+- App: http://localhost:5173 (proxies `/api/auth` → 5098, `/api/tasks` → 5099)
 
 ## Demo credentials
 
@@ -75,20 +88,53 @@ On first API start in **Development**, the database is migrated and seeded. The 
 
 1. Sign in as **`demo@bla.local`** / **`Demo123!`** (login form is pre-filled). Registering a new account will not show seed data.
 2. Restart the API after pulling changes (seeding runs at startup).
-3. If you previously logged in as demo with an empty DB, delete `src/BlaInterview.Api/bla.db` and restart — seed runs per user when that user has zero tasks.
+3. If you previously logged in as demo with an empty DB, delete `src/BlaInterview.Auth.Api/bla.db` and restart both APIs — seed runs per user when that user has zero tasks.
 
 You can confirm seed data in Swagger: `POST /api/auth/login` → Authorize with the token → `GET /api/tasks` should return 8 items with `"status": "Todo"` (string enums, not numbers).
 
 ### 403 demo
 
+Automated in `TaskOwnershipTests` (demo token → other user's task → 403). Manual check:
+
 1. Log in as `demo@bla.local`
-2. In Swagger, `GET /api/tasks` and copy a task ID from the other user (or use seeded `[Other]` titles via second login)
-3. `GET /api/tasks/{id}` with demo token → **403 Forbidden**
+2. Log in as `other@bla.local` in Swagger, `GET /api/tasks`, copy a task ID
+3. With demo token, `GET /api/tasks/{id}` → **403 Forbidden**
 
 ## Tests
 
 ```bash
 dotnet test
+```
+
+**Last verified:** **79 pass** — 42 unit + 37 integration.
+
+| Assembly | Focus |
+|----------|--------|
+| `BlaInterview.Unit.Tests` | Domain, `TaskService`, validators, notifications, mapper (Moq.AutoMock + Bogus) |
+| `BlaInterview.Integration.Tests` | Dual-host WAF (`AuthAppFactory` + `TasksAppFactory`, shared SQLite), repository (in-memory SQLite) |
+
+### Integration API tests (by host)
+
+| File | Host | Examples |
+|------|------|----------|
+| `AuthTests`, `AuthExtendedTests` | Auth (5098) | login, register, logout, health, 401 |
+| `TaskTests`, `TaskCrudTests`, `TaskQueryTests` | Tasks (5099) | CRUD, filters, pagination, 400/404 |
+| `TaskOwnershipTests` | Tasks + Auth JWT | demo user → other user's task → **403** |
+| `AuthExtendedTests` (cross-host) | Both | JWT from Auth accepted by Tasks |
+
+### Filter by category
+
+```bash
+dotnet test --filter "Category=Task Service"
+dotnet test --filter "Category=Integration Web - Tasks"
+dotnet test --filter "Category=Integration Web - Auth"
+dotnet test --filter "Category=Task Repository"
+```
+
+### Coverage (optional)
+
+```bash
+dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
 ```
 
 ## JWT demo tradeoff
@@ -98,7 +144,7 @@ For interview/demo purposes, JWT is stored in `localStorage`. In production, pre
 ## Project structure
 
 ```
-src/           # Domain, Application, Infrastructure, Api
+src/           # Domain, Application, Infrastructure, Api.Shared, Auth.Api, Tasks.Api
 tests/         # BlaInterview.Unit.Tests + BlaInterview.Integration.Tests
 client/        # React frontend
 docs/          # genai-scaffold-prompt.md, user-stories.md
@@ -118,7 +164,7 @@ AI produced: Clean Architecture solution layout, Domain/Application/Infrastructu
 
 ### Validation performed
 
-- `dotnet build` and `dotnet test` (unit + WebApplicationFactory integration)
+- `dotnet build` and `dotnet test` (**79 pass** — 42 unit + 37 integration, dual-host WAF)
 - Manual smoke: login, CRUD, drag between columns, reactivate from Done/Canceled, filters, 403 on other user's task
 - Frontend `npm run build`
 

@@ -62,4 +62,106 @@ public class TaskRepositoryTests
         Assert.Single(page.Items);
         Assert.Equal(2, page.TotalCount);
     }
+
+    [Fact(DisplayName = "UpdateAsync should persist title changes.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_UpdateAsync_ShouldPersistChanges()
+    {
+        // Arrange
+        await _fixtures.SeedDefaultTasksAsync();
+        var existing = _fixtures.Context.Tasks.First(t => t.UserId == "user1");
+        existing.Title = "Renamed task";
+
+        // Act
+        await _fixtures.Repository.UpdateAsync(existing);
+        await _fixtures.Repository.SaveChangesAsync();
+        var loaded = await _fixtures.Repository.GetByIdAsync(existing.Id);
+
+        // Assert
+        Assert.Equal("Renamed task", loaded?.Title);
+    }
+
+    [Fact(DisplayName = "GetByUserAsync should not return another user's tasks.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByUserAsync_ShouldScopeByUser()
+    {
+        // Arrange
+        await _fixtures.SeedDefaultTasksAsync();
+        var query = new TaskQuery(null, null, null, null, null, null, 1, 100);
+
+        // Act
+        var page = await _fixtures.Repository.GetByUserAsync("user1", query);
+
+        // Assert
+        Assert.Equal(2, page.TotalCount);
+        Assert.All(page.Items, t => Assert.Equal("user1", t.UserId));
+    }
+
+    [Fact(DisplayName = "GetByIdAsync should return persisted task.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByIdAsync_ShouldReturnTask()
+    {
+        // Arrange
+        await _fixtures.SeedDefaultTasksAsync();
+        var existing = _fixtures.Context.Tasks.First(t => t.UserId == "user1");
+
+        // Act
+        var task = await _fixtures.Repository.GetByIdAsync(existing.Id);
+
+        // Assert
+        Assert.NotNull(task);
+        Assert.Equal(existing.Id, task!.Id);
+    }
+
+    [Fact(DisplayName = "Add and delete should round-trip through the database.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_AddDelete_ShouldRoundTrip()
+    {
+        // Arrange
+        var task = _fixtures.GenerateTask("user1", "Disposable", KanbanStatus.Todo, DateTimeOffset.UtcNow);
+
+        // Act
+        await _fixtures.Repository.AddAsync(task);
+        await _fixtures.Repository.SaveChangesAsync();
+        var loaded = await _fixtures.Repository.GetByIdAsync(task.Id);
+        await _fixtures.Repository.DeleteAsync(loaded!);
+        await _fixtures.Repository.SaveChangesAsync();
+
+        // Assert
+        Assert.NotNull(loaded);
+        Assert.Null(await _fixtures.Repository.GetByIdAsync(task.Id));
+    }
+
+    [Fact(DisplayName = "Tasks should sort by due date then title.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByUserAsync_ShouldSortByDueDate()
+    {
+        // Arrange
+        await _fixtures.SeedDatedTasksAsync();
+        var query = new TaskQuery(null, null, null, null, null, null, 1, 100);
+
+        // Act
+        var page = await _fixtures.Repository.GetByUserAsync("user1", query);
+
+        // Assert
+        Assert.Equal(3, page.Items.Count);
+        Assert.Equal("Early task", page.Items[0].Title);
+        Assert.Equal("Late task", page.Items[1].Title);
+        Assert.Equal("No due date", page.Items[2].Title);
+    }
+
+    [Fact(DisplayName = "Filtering by multiple statuses should return union.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByUserAsync_MultiStatus_ShouldReturnUnion()
+    {
+        // Arrange
+        await _fixtures.SeedDefaultTasksAsync();
+        var query = new TaskQuery(null, [KanbanStatus.Todo, KanbanStatus.Completed], null, null, null, null, 1, 100);
+
+        // Act
+        var page = await _fixtures.Repository.GetByUserAsync("user1", query);
+
+        // Assert
+        Assert.Equal(2, page.TotalCount);
+    }
 }

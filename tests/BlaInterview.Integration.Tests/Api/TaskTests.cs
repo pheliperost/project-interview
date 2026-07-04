@@ -28,7 +28,7 @@ public class TaskTests
     public async Task Task_Create_WithValidToken_ShouldReturnCreated()
     {
         // Arrange
-        var client = await _fixture.CreateAuthenticatedClientAsync();
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
         var request = _fixture.GenerateValidCreateRequest();
 
         // Act
@@ -43,7 +43,7 @@ public class TaskTests
     public async Task Task_GetList_ShouldReturnPaginatedResponse()
     {
         // Arrange
-        var client = await _fixture.CreateAuthenticatedClientAsync();
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
 
         // Act
         var response = await client.GetAsync("/api/tasks");
@@ -63,7 +63,7 @@ public class TaskTests
     public async Task Task_GetList_SearchByTitle_ShouldReturnMatchingOnly()
     {
         // Arrange
-        var client = await _fixture.CreateAuthenticatedClientAsync();
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
 
         // Act
         var response = await client.GetAsync("/api/tasks?search=API");
@@ -81,7 +81,7 @@ public class TaskTests
     public async Task Task_GetList_FilterByStatus_ShouldReturnMatchingOnly()
     {
         // Arrange
-        var client = await _fixture.CreateAuthenticatedClientAsync();
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
 
         // Act
         var response = await client.GetAsync("/api/tasks?status=Completed");

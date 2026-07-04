@@ -22,7 +22,7 @@ public class AuthTests
     public async Task Auth_GetTasks_WithoutToken_ShouldReturn401()
     {
         // Arrange
-        var client = _fixture.Factory.CreateClient();
+        var client = _fixture.TasksFactory.CreateClient();
 
         // Act
         var response = await client.GetAsync("/api/tasks");
@@ -36,7 +36,7 @@ public class AuthTests
     public async Task Auth_Login_WithDemoUser_ShouldReturnToken()
     {
         // Arrange
-        var client = _fixture.Factory.CreateClient();
+        var client = _fixture.AuthFactory.CreateClient();
 
         // Act
         var response = await client.PostAsJsonAsync(

@@ -4,6 +4,13 @@ Log of meaningful AI-assisted sessions: what was suggested, what was accepted/re
 
 ---
 
+## Two-API split (2026-07-04)
+
+- **User request:** Split into segregated Auth API + Tasks API per BLA interview PDF (Option B).
+- **Changes:** `BlaInterview.Auth.Api` (:5098) — register/login/logout/health + user seeding; `BlaInterview.Tasks.Api` (:5099) — task CRUD + task seeding; `BlaInterview.Api.Shared` — shared middleware/Swagger; `JwtAuthenticationExtensions` shared signing/validation config; `UserDatabaseSeeder` / `TaskDatabaseSeeder`; dual Vite proxy; integration tests use `AuthAppFactory` + `TasksAppFactory` with cross-API JWT flow.
+- **Removed:** `BlaInterview.Api` (single host).
+- **Verified:** `dotnet test` — 28 pass (19 unit + 9 integration).
+
 ## Phase 1 — Alignment (2026-07-04)
 
 - **AI suggested:** Single informal user story only; defer detailed stories until after scaffold.
@@ -43,6 +50,7 @@ Log of meaningful AI-assisted sessions: what was suggested, what was accepted/re
 - Sanitized `AGENT-HANDOFF.md` local paths; README documents first-time config copy step.
 - Verified `dotnet test` (28 pass) and `git add -n` excludes secrets/artifacts.
 
+## Tests — LessonsManagement pattern restructure (2026-07-04)
 
 - **User asked:** Align BLA tests with LessonsManagement reference projects (`TestXUnit.Tests` + `IntegrationTestsXUnitApp.Tests`) — fixtures, Theory, Trait, MemberData, Collection; segregate unit vs integration.
 - **Accepted/changed:** Collapsed 4 per-layer projects → **2 assemblies** (`BlaInterview.Unit.Tests`, `BlaInterview.Integration.Tests`). Unit uses **Moq.AutoMock** + **Bogus** (`GenerateValid*` / `GenerateInvalid*`); integration uses **ICollectionFixture** only (removed redundant `IClassFixture`); split API tests into `AuthTests` + `TaskTests`; repository tests use **in-memory SQLite** (fake DB, real EF).
@@ -70,3 +78,24 @@ Log of meaningful AI-assisted sessions: what was suggested, what was accepted/re
 - **Root cause:** `isAuthenticated` only checked token presence in localStorage, not expiry; no global 401 handler to clear session or redirect.
 - **Fixes:** `isTokenValid()` (stored `expiresAt` + JWT `exp`); `ApiError` + 401 handler in `client.ts` clears auth and notifies `AuthContext`; expired sessions cleared on app init; TanStack Query skips retry on 401; task-list path normalization fixed for query strings.
 - **Verified:** `npm run build`.
+
+## 2026-07-04 — Notification pattern (LessonsManagement)
+
+- **User request:** Apply the same `Notification` / `Notifyer` / `INotifyer` pattern from LessonsManagement.
+- **Implemented:** `Application/Notifications/` (`Notification`, `Notifyer`), `INotifyer`, `BaseService` (Notify + FluentValidation integration), scoped DI registration. `TaskService` extends `BaseService` — validation and business-rule failures call `Notify()` instead of throwing `AppException`. `BaseController` with `ValidOperation()` / `NotificationError()`; `TasksController` checks notifications before returning success responses.
+- **API adaptation:** `Notification` includes optional `StatusCode` (default 400) so Web API can still return 403/404 while keeping the same collector pattern.
+- **Verified:** `dotnet test` (28 pass).
+
+## 2026-07-04 — Task ownership tests (403)
+
+- **Added:** Unit tests for `UpdateTaskAsync`, `DeleteTaskAsync`, `ReactivateAsync` when task belongs to another user (403 notify, no repository write).
+- **Added:** Integration `TaskOwnershipTests` — demo user GET/PUT/DELETE/reactivate against seeded `other@bla.local` tasks → 403 + error body.
+- **Fixture:** `CreateAuthenticatedTasksClientAsync(email, password)` overload + `GetSeededOtherUserTaskIdAsync()`.
+- **Verified:** `dotnet test` (35 pass).
+
+## 2026-07-04 — Expanded backend test coverage
+
+- **Unit (+20):** `ValidatorTests`, `NotificationTests`, `TaskMapperTests`; `TaskService` delete/404/invalid filter/terminal same-status.
+- **Integration (+22):** `TaskCrudTests`, `TaskQueryTests`, `AuthExtendedTests`, extended `TaskRepositoryTests`; fixture helpers `GetDemoTaskAsync`, `CreateDemoTaskAsync`.
+- **Fix:** `AddAuthInfrastructure` registers JWT after Identity so Bearer works on Auth API logout.
+- **Verified:** `dotnet test` (79 pass — 42 unit + 37 integration).

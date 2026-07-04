@@ -16,12 +16,12 @@ public interface ITaskRepository
 
 public interface ITaskService
 {
-    Task<TaskListResponse> GetTasksAsync(string userId, TaskFilterRequest filter, CancellationToken cancellationToken = default);
-    Task<TaskResponse> GetTaskByIdAsync(string userId, Guid id, CancellationToken cancellationToken = default);
-    Task<TaskResponse> CreateTaskAsync(string userId, CreateTaskRequest request, CancellationToken cancellationToken = default);
-    Task<TaskResponse> UpdateTaskAsync(string userId, Guid id, UpdateTaskRequest request, CancellationToken cancellationToken = default);
+    Task<TaskListResponse?> GetTasksAsync(string userId, TaskFilterRequest filter, CancellationToken cancellationToken = default);
+    Task<TaskResponse?> GetTaskByIdAsync(string userId, Guid id, CancellationToken cancellationToken = default);
+    Task<TaskResponse?> CreateTaskAsync(string userId, CreateTaskRequest request, CancellationToken cancellationToken = default);
+    Task<TaskResponse?> UpdateTaskAsync(string userId, Guid id, UpdateTaskRequest request, CancellationToken cancellationToken = default);
     Task DeleteTaskAsync(string userId, Guid id, CancellationToken cancellationToken = default);
-    Task<TaskResponse> ReactivateAsync(string userId, Guid id, CancellationToken cancellationToken = default);
+    Task<TaskResponse?> ReactivateAsync(string userId, Guid id, CancellationToken cancellationToken = default);
 }
 
 public interface IAuthService
