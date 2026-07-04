@@ -1,0 +1,31 @@
+# .NET
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
+test-api.db*
+TestResults/
+coverage/
+*.user
+*.suo
+
+# Local secrets (copy from *.example files)
+**/appsettings.Development.json
+.env
+.env.*
+!.env.example
+*.local
+
+# Node
+client/node_modules/
+client/dist/
+
+# IDE / tooling
+.vs/
+.idea/
+.cursor/
+
+# OS
+Thumbs.db
+.DS_Store

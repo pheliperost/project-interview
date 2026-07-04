@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BlaInterview.Api/BlaInterview.Api.csproj" />
+    <Project Path="src/BlaInterview.Application/BlaInterview.Application.csproj" />
+    <Project Path="src/BlaInterview.Domain/BlaInterview.Domain.csproj" />
+    <Project Path="src/BlaInterview.Infrastructure/BlaInterview.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BlaInterview.Integration.Tests/BlaInterview.Integration.Tests.csproj" />
+    <Project Path="tests/BlaInterview.Unit.Tests/BlaInterview.Unit.Tests.csproj" />
+  </Folder>
+</Solution>
