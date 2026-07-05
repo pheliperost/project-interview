@@ -17,7 +17,7 @@ public static class DependencyInjection
     public static IServiceCollection AddTasksApplication(this IServiceCollection services)
     {
         services.AddAutoMapper(typeof(TaskProfile).Assembly);
-        services.AddValidatorsFromAssemblyContaining<Validators.CreateTaskRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<Validators.CreateTaskBodyValidator>();
         services.AddScoped<INotifyer, Notifyer>();
         services.AddScoped<ITaskService, Services.TaskService>();
         return services;

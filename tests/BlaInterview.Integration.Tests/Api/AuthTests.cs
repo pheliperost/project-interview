@@ -33,7 +33,7 @@ public class AuthTests
     {
         // Arrange
         var client = _fixture.TasksFactory.CreateClient();
-        var body = new CreateTaskRequest("Unauthorized task", null, TaskPriority.Medium, null);
+        var body = new CreateTaskBody("Unauthorized task", null, TaskPriority.Medium, null);
 
         // Act
         var response = await client.PostAsJsonAsync("/api/tasks", body);
@@ -58,5 +58,35 @@ public class AuthTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.False(string.IsNullOrWhiteSpace(auth?.Token));
+    }
+
+    [Fact(DisplayName = "Logging in with wrong password should return 401.")]
+    [Trait("Category", "Integration Web - Auth")]
+    public async Task Auth_Login_WrongPassword_ShouldReturn401()
+    {
+        // Arrange
+        var client = _fixture.AuthFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequest(IntegrationTestsFixture.DemoEmail, "WrongPass1!"));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "Getting tasks with valid token should return 200.")]
+    [Trait("Category", "Integration Web - Auth")]
+    public async Task Auth_GetTasks_WithValidToken_ShouldReturnOk()
+    {
+        // Arrange
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
+
+        // Act
+        var response = await client.GetAsync("/api/tasks");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }

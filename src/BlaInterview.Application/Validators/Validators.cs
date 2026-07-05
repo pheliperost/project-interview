@@ -22,9 +22,27 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
-public class CreateTaskRequestValidator : AbstractValidator<CreateTaskRequest>
+public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
 {
-    public CreateTaskRequestValidator()
+    public ForgotPasswordRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+    }
+}
+
+public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
+{
+    public ResetPasswordRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Token).NotEmpty();
+        RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(8);
+    }
+}
+
+public class CreateTaskBodyValidator : AbstractValidator<CreateTaskBody>
+{
+    public CreateTaskBodyValidator()
     {
         RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Description).NotEmpty().MaximumLength(2000);
@@ -34,9 +52,9 @@ public class CreateTaskRequestValidator : AbstractValidator<CreateTaskRequest>
     }
 }
 
-public class UpdateTaskRequestValidator : AbstractValidator<UpdateTaskRequest>
+public class UpdateTaskBodyValidator : AbstractValidator<UpdateTaskBody>
 {
-    public UpdateTaskRequestValidator()
+    public UpdateTaskBodyValidator()
     {
         RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Description).NotEmpty().MaximumLength(2000);

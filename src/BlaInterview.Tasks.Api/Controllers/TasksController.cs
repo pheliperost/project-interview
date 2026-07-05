@@ -26,7 +26,9 @@ public class TasksController : BaseController
         [FromQuery] TaskListQuery query,
         CancellationToken cancellationToken)
     {
-        var result = await _taskService.GetTasksAsync(UserId, query.ToFilterRequest(), cancellationToken);
+        var result = await _taskService.GetTasksAsync(
+            new GetTasksRequest(UserId, query.ToFilterRequest()),
+            cancellationToken);
         if (!ValidOperation())
             return NotificationError();
 
@@ -36,7 +38,7 @@ public class TasksController : BaseController
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TaskResponse>> GetTask(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _taskService.GetTaskByIdAsync(UserId, id, cancellationToken);
+        var result = await _taskService.GetTaskByIdAsync(new GetTaskByIdRequest(UserId, id), cancellationToken);
         if (!ValidOperation())
             return NotificationError();
 
@@ -44,9 +46,9 @@ public class TasksController : BaseController
     }
 
     [HttpPost]
-    public async Task<ActionResult<TaskResponse>> CreateTask(CreateTaskRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TaskResponse>> CreateTask(CreateTaskBody body, CancellationToken cancellationToken)
     {
-        var task = await _taskService.CreateTaskAsync(UserId, request, cancellationToken);
+        var task = await _taskService.CreateTaskAsync(new CreateTaskRequest(UserId, body), cancellationToken);
         if (!ValidOperation())
             return NotificationError();
 
@@ -54,9 +56,9 @@ public class TasksController : BaseController
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<TaskResponse>> UpdateTask(Guid id, UpdateTaskRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TaskResponse>> UpdateTask(Guid id, UpdateTaskBody body, CancellationToken cancellationToken)
     {
-        var result = await _taskService.UpdateTaskAsync(UserId, id, request, cancellationToken);
+        var result = await _taskService.UpdateTaskAsync(new UpdateTaskRequest(UserId, id, body), cancellationToken);
         if (!ValidOperation())
             return NotificationError();
 
@@ -66,7 +68,7 @@ public class TasksController : BaseController
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteTask(Guid id, CancellationToken cancellationToken)
     {
-        await _taskService.DeleteTaskAsync(UserId, id, cancellationToken);
+        await _taskService.DeleteTaskAsync(new DeleteTaskRequest(UserId, id), cancellationToken);
         if (!ValidOperation())
             return NotificationError();
 
@@ -76,7 +78,7 @@ public class TasksController : BaseController
     [HttpPost("{id:guid}/reactivate")]
     public async Task<ActionResult<TaskResponse>> Reactivate(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _taskService.ReactivateAsync(UserId, id, cancellationToken);
+        var result = await _taskService.ReactivateAsync(new ReactivateTaskRequest(UserId, id), cancellationToken);
         if (!ValidOperation())
             return NotificationError();
 

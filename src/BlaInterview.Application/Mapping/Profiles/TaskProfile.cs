@@ -29,7 +29,7 @@ public class TaskProfile : Profile
                     : TaskPagination.DefaultPageSize))
             .ForAllMembers(opt => opt.Ignore());
 
-        CreateMap<CreateTaskRequest, TaskItem>()
+        CreateMap<CreateTaskBody, TaskItem>()
             .ForMember(d => d.Id, opt => opt.MapFrom(_ => Guid.NewGuid()))
             .ForMember(d => d.Status, opt => opt.MapFrom(_ => KanbanStatus.Todo))
             .ForMember(d => d.Priority, opt => opt.MapFrom(s => s.Priority ?? TaskPriority.Medium))

@@ -47,4 +47,35 @@ public class TaskQueryTests
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Fact(DisplayName = "Listing tasks with valid date range should return 200.")]
+    [Trait("Category", "Integration Web - Tasks")]
+    public async Task Task_GetList_ValidDateRange_ShouldReturnOk()
+    {
+        // Arrange
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
+        var from = DateTimeOffset.UtcNow.AddDays(-30).ToString("O");
+        var to = DateTimeOffset.UtcNow.ToString("O");
+
+        // Act
+        var response = await client.GetAsync(
+            $"/api/tasks?createdFrom={Uri.EscapeDataString(from)}&createdTo={Uri.EscapeDataString(to)}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "Listing tasks with invalid page size should return 400.")]
+    [Trait("Category", "Integration Web - Tasks")]
+    public async Task Task_GetList_InvalidPageSize_ShouldReturn400()
+    {
+        // Arrange
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
+
+        // Act
+        var response = await client.GetAsync("/api/tasks?pageSize=0");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }

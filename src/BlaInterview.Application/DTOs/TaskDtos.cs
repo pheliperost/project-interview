@@ -2,13 +2,13 @@ using BlaInterview.Domain.Enums;
 
 namespace BlaInterview.Application.DTOs;
 
-public record CreateTaskRequest(
+public record CreateTaskBody(
     string Title,
     string? Description,
     TaskPriority? Priority,
     DateTimeOffset? DueDate);
 
-public record UpdateTaskRequest(
+public record UpdateTaskBody(
     string Title,
     string? Description,
     KanbanStatus Status,

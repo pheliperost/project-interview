@@ -29,7 +29,7 @@ public class TaskServiceTests
         var request = _fixtures.GenerateValidCreateRequest();
 
         // Act
-        var result = await service.CreateTaskAsync("user1", request);
+        var result = await service.CreateTaskAsync(new CreateTaskRequest("user1", request));
 
         // Assert
         Assert.NotNull(result);
@@ -48,7 +48,7 @@ public class TaskServiceTests
         var request = _fixtures.GenerateInvalidCreateRequestEmptyTitle();
 
         // Act
-        var result = await service.CreateTaskAsync("user1", request);
+        var result = await service.CreateTaskAsync(new CreateTaskRequest("user1", request));
 
         // Assert
         Assert.Null(result);
@@ -65,7 +65,7 @@ public class TaskServiceTests
         var request = _fixtures.GenerateInvalidCreateRequestPastDueDate();
 
         // Act
-        var result = await service.CreateTaskAsync("user1", request);
+        var result = await service.CreateTaskAsync(new CreateTaskRequest("user1", request));
 
         // Assert
         Assert.Null(result);
@@ -89,7 +89,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.Null(result);
@@ -107,7 +107,7 @@ public class TaskServiceTests
         var pastDue = DateTimeOffset.UtcNow.AddDays(-2);
         var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Completed);
         task.DueDate = pastDue;
-        var request = new UpdateTaskRequest(
+        var request = new UpdateTaskBody(
             "Updated title",
             "Updated description",
             KanbanStatus.Completed,
@@ -119,7 +119,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.NotNull(result);
@@ -139,7 +139,7 @@ public class TaskServiceTests
         var sameDayMidnight = new DateTimeOffset(stored.UtcDateTime.Date, TimeSpan.Zero);
         var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Completed);
         task.DueDate = stored;
-        var request = new UpdateTaskRequest(
+        var request = new UpdateTaskBody(
             "Updated title",
             "Updated description",
             KanbanStatus.Completed,
@@ -151,7 +151,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.NotNull(result);
@@ -167,7 +167,7 @@ public class TaskServiceTests
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Todo);
         task.DueDate = DateTimeOffset.UtcNow.AddDays(-1);
-        var request = new UpdateTaskRequest(
+        var request = new UpdateTaskBody(
             task.Title,
             task.Description!,
             task.Status,
@@ -179,7 +179,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.NotNull(result);
@@ -195,7 +195,7 @@ public class TaskServiceTests
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Todo);
         task.DueDate = DateTimeOffset.UtcNow.AddDays(-5);
-        var request = new UpdateTaskRequest(
+        var request = new UpdateTaskBody(
             task.Title,
             task.Description!,
             task.Status,
@@ -207,7 +207,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.Null(result);
@@ -231,7 +231,7 @@ public class TaskServiceTests
         var request = _fixtures.GenerateValidUpdateRequest(targetStatus);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.Null(result);
@@ -256,7 +256,7 @@ public class TaskServiceTests
         var request = _fixtures.GenerateValidUpdateRequest(targetStatus);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.NotNull(result);
@@ -279,7 +279,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.ReactivateAsync("user1", taskId);
+        var result = await service.ReactivateAsync(new ReactivateTaskRequest("user1", taskId));
 
         // Assert
         Assert.NotNull(result);
@@ -302,7 +302,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.ReactivateAsync("user1", taskId);
+        var result = await service.ReactivateAsync(new ReactivateTaskRequest("user1", taskId));
 
         // Assert
         Assert.Null(result);
@@ -324,7 +324,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.GetTaskByIdAsync("user1", taskId);
+        var result = await service.GetTaskByIdAsync(new GetTaskByIdRequest("user1", taskId));
 
         // Assert
         Assert.Null(result);
@@ -348,7 +348,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.Null(result);
@@ -372,7 +372,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        await service.DeleteTaskAsync("user1", taskId);
+        await service.DeleteTaskAsync(new DeleteTaskRequest("user1", taskId));
 
         // Assert
         _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.DeleteAsync(It.IsAny<TaskItem>(), default), Times.Never);
@@ -395,7 +395,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.ReactivateAsync("user1", taskId);
+        var result = await service.ReactivateAsync(new ReactivateTaskRequest("user1", taskId));
 
         // Assert
         Assert.Null(result);
@@ -419,7 +419,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        await service.DeleteTaskAsync("user1", taskId);
+        await service.DeleteTaskAsync(new DeleteTaskRequest("user1", taskId));
 
         // Assert
         _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.DeleteAsync(task, default), Times.Once);
@@ -438,7 +438,7 @@ public class TaskServiceTests
             .ReturnsAsync((TaskItem?)null);
 
         // Act
-        var result = await service.GetTaskByIdAsync("user1", taskId);
+        var result = await service.GetTaskByIdAsync(new GetTaskByIdRequest("user1", taskId));
 
         // Assert
         Assert.Null(result);
@@ -456,7 +456,7 @@ public class TaskServiceTests
         var filter = new TaskFilterRequest(null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(-1), null, null, null, null);
 
         // Act
-        var result = await service.GetTasksAsync("user1", filter);
+        var result = await service.GetTasksAsync(new GetTasksRequest("user1", filter));
 
         // Assert
         Assert.Null(result);
@@ -479,7 +479,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync(new UpdateTaskRequest("user1", taskId, request));
 
         // Assert
         Assert.NotNull(result);

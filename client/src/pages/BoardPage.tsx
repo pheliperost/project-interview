@@ -232,7 +232,7 @@ export function BoardPage() {
   }
 
   return (
-    <div className="app-shell flex h-full min-h-0 w-full overflow-hidden">
+    <div className="app-shell flex min-h-0 overflow-hidden">
       <SidebarFilters
         filters={filters}
         onChange={setFilters}
@@ -307,16 +307,14 @@ export function BoardPage() {
         {isLoading ? (
           <BoardSkeleton />
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <KanbanBoard
-              ref={boardRef}
-              tasks={tasks}
-              onStatusChange={handleStatusChange}
-              onMoveTo={handleMoveTo}
-              onEdit={(task) => openEditor(task)}
-              onDelete={(id) => setDeleteConfirm(id)}
-            />
-          </div>
+          <KanbanBoard
+            ref={boardRef}
+            tasks={tasks}
+            onStatusChange={handleStatusChange}
+            onMoveTo={handleMoveTo}
+            onEdit={(task) => openEditor(task)}
+            onDelete={(id) => setDeleteConfirm(id)}
+          />
         )}
 
         <Button

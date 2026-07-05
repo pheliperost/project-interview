@@ -1,5 +1,6 @@
 using BlaInterview.Application.Interfaces;
 using BlaInterview.Infrastructure.Identity;
+using BlaInterview.Infrastructure.Options;
 using BlaInterview.Infrastructure.Persistence;
 using BlaInterview.Infrastructure.Repositories;
 using BlaInterview.Infrastructure.Services;
@@ -38,6 +39,10 @@ public static class DependencyInjection
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+        services.Configure<PasswordResetOptions>(configuration.GetSection(PasswordResetOptions.SectionName));
+        services.AddSingleton<FakeEmailSender>();
+        services.AddSingleton<IEmailSender>(sp => sp.GetRequiredService<FakeEmailSender>());
 
         services.AddJwtBearerAuthentication(configuration);
 

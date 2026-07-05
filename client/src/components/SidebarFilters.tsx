@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { openDatePicker } from '@/lib/openDatePicker';
 
 interface FilterPanelProps {
   filters: TaskFilters;
@@ -81,7 +82,7 @@ export function FilterPanel({
   }
 
   return (
-    <div className={cn('flex flex-col', variant === 'drawer' && 'min-h-0 flex-1', className)}>
+    <div className={cn('flex flex-col', className)}>
       {variant === 'sidebar' && (
         <div className="mb-6">
           <p className="text-primary text-xs font-bold tracking-widest">SIMPLE TASKS</p>
@@ -208,16 +209,37 @@ function DateFilterGroup({
       </Select>
       {preset === 'custom' && (
         <div className={cn('gap-2', compact ? 'flex flex-col' : 'grid grid-cols-2')}>
-          <Input
-            type="date"
-            value={from?.slice(0, 10) ?? ''}
-            onChange={(e) => onChange(preset, e.target.value, to)}
-          />
-          <Input
-            type="date"
-            value={to?.slice(0, 10) ?? ''}
-            onChange={(e) => onChange(preset, from, e.target.value)}
-          />
+          {compact ? (
+            <>
+              <input
+                type="date"
+                value={from?.slice(0, 10) ?? ''}
+                onChange={(e) => onChange(preset, e.target.value, to)}
+                onClick={openDatePicker}
+                className="task-date-input h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+              />
+              <input
+                type="date"
+                value={to?.slice(0, 10) ?? ''}
+                onChange={(e) => onChange(preset, from, e.target.value)}
+                onClick={openDatePicker}
+                className="task-date-input h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+              />
+            </>
+          ) : (
+            <>
+              <Input
+                type="date"
+                value={from?.slice(0, 10) ?? ''}
+                onChange={(e) => onChange(preset, e.target.value, to)}
+              />
+              <Input
+                type="date"
+                value={to?.slice(0, 10) ?? ''}
+                onChange={(e) => onChange(preset, from, e.target.value)}
+              />
+            </>
+          )}
         </div>
       )}
     </div>

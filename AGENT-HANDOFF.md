@@ -2,15 +2,15 @@
 
 > **Purpose:** Give a new Cursor agent full operational context so it can continue this project without re-discovering decisions from scratch.
 >
-> **This file is NOT the product spec.** For scope and acceptance criteria, read `docs/genai-scaffold-prompt.md` and `docs/user-stories.md`. For session history, read `AI-NOTES.md`.
+> **This file is NOT the product spec.** For scope and acceptance criteria, read [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md) and [docs/user-stories.md](docs/user-stories.md). For session history, read [AI-NOTES.md](AI-NOTES.md).
 
 ---
 
 ## Quick start
 
 1. Read this file end-to-end.
-2. Skim `AI-NOTES.md` for what changed and why.
-3. Use `docs/genai-scaffold-prompt.md` only when you need the full original spec.
+2. Skim [AI-NOTES.md](AI-NOTES.md) for what changed and why.
+3. Use [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md) only when you need the full original spec.
 4. Run the app and tests before making non-trivial changes.
 
 ```powershell
@@ -59,11 +59,13 @@ npm run dev
 
 | File | Role |
 |------|------|
-| **`AGENT-HANDOFF.md`** (this file) | Operational context for the next agent |
-| `docs/genai-scaffold-prompt.md` | Full agreed spec — stack, API contract, domain, seeds |
-| `docs/user-stories.md` | S1–S7 user stories + acceptance criteria |
-| `AI-NOTES.md` | Chronological log of AI sessions, fixes, verification |
-| `README.md` | Human-facing setup, demo users, GenAI workflow summary |
+| **[AGENT-HANDOFF.md](AGENT-HANDOFF.md)** (this file) | Operational context for the next agent |
+| [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md) | Full agreed spec — stack, API contract, domain, seeds |
+| [docs/user-stories.md](docs/user-stories.md) | S1–S7 user stories + acceptance criteria |
+| [AI-NOTES.md](AI-NOTES.md) | Chronological log of AI sessions, fixes, verification |
+| [README.md](README.md) | Human-facing setup, demo users, GenAI workflow summary |
+| [docs/interview-walkthrough.md](docs/interview-walkthrough.md) | Live demo script |
+| [docs/genai-prompt-vs-result.md](docs/genai-prompt-vs-result.md) | Prompt vs as-built delta |
 
 ---
 
@@ -79,10 +81,12 @@ npm run dev
 | Frontend | React 19, Vite, TypeScript, TanStack Query, Tailwind, shadcn/ui, @dnd-kit |
 
 **Environment notes:**
-- Machine has .NET 10 SDK only — targets `net10.0`, not net8. Patterns match exercise intent.
+- Requires .NET 10 SDK (`net10.0`).
 - **PowerShell:** chain commands with `;`, not `&&`.
 
-**Last verified:** `dotnet test` (**105 pass** — 60 unit + 45 integration), `client/` `npm run build` (pass).
+**Last verified:** `dotnet test` (**105 pass** — 60 unit + 45 integration), `client/` `npm run build` (pass), `client/` `npm run verify` (pass).
+
+**Lint:** `client/` — `npm run verify` (oxlint + `tsc`). Backend — `.editorconfig` + `Directory.Build.props` (NET analyzers).
 
 ---
 
@@ -260,7 +264,7 @@ Login page pre-fills demo credentials (`client/src/pages/LoginPage.tsx`).
 - Richer domain behavior on `TaskItem` (discuss with team)
 - TaskCard / board visual polish (partial — urgency badges, skeletons, empty columns done)
 - More unit or E2E tests
-- Interview demo walkthrough script → **`docs/interview-walkthrough.md`**
+- Interview demo walkthrough script → [docs/interview-walkthrough.md](docs/interview-walkthrough.md)
 - CI pipeline → **`.github/workflows/ci.yml`**
 
 ---

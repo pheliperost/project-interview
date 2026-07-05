@@ -2,6 +2,8 @@
 
 > Saved during Phase 1 alignment. Use this prompt to generate the API scaffold and full implementation.
 > **Do not use external identity providers (Clerk, Auth0, etc.).**
+>
+> **See also:** [User stories](user-stories.md) · [Prompt vs result](genai-prompt-vs-result.md) · [README](../README.md) · [AI-NOTES](../AI-NOTES.md)
 
 ---
 
@@ -9,7 +11,7 @@
 
 As a professional managing my own work, I want a secure personal Kanban board where I can create tasks with priorities and due dates, drag them across my workflow, and clearly mark work as done or canceled, so that I always know what to focus on next and can deliberately reopen work when plans change, without sharing or mixing tasks with other users.
 
-See `docs/user-stories.md` for scoped stories (S1–S7) and acceptance criteria.
+See [docs/user-stories.md](user-stories.md) for scoped stories (S1–S7) and acceptance criteria.
 
 ---
 
@@ -17,7 +19,7 @@ See `docs/user-stories.md` for scoped stories (S1–S7) and acceptance criteria.
 
 | Layer | Technology |
 |-------|------------|
-| Backend | .NET 8, ASP.NET Web API (MVC controllers) |
+| Backend | .NET 10 (`net10.0`), ASP.NET Web API (MVC controllers) |
 | Architecture | Clean Architecture — KISS, SOLID |
 | Database | SQLite, EF Core, LINQ, Migrations |
 | Auth | ASP.NET Core Identity + JWT (users in our DB, password hash) |
@@ -389,7 +391,7 @@ Empty search string → omit `search` param (no title filter).
 
 ## Logout
 
-### User story (part of S1 — see `user-stories.md`)
+### User story (part of S1 — see [user-stories.md](user-stories.md))
 
 Logged-in user clicks **Logout** in sidebar → session ends → redirect to login. **No confirmation modal.**
 
@@ -488,7 +490,7 @@ Two users with **distinct demo scenarios** — credentials documented in README.
 
 - UI polish matching dark Kanban reference
 - Seed data, README with setup + demo credentials
-- Edge case coverage and GenAI documentation (`AI-NOTES.md`, README GenAI section)
+- Edge case coverage and GenAI documentation ([AI-NOTES.md](../AI-NOTES.md), [README GenAI section](../README.md#genai-workflow))
 
 ---
 
@@ -500,4 +502,8 @@ Two users with **distinct demo scenarios** — credentials documented in README.
 4. **Corrections** — at least 2–3 real things AI got wrong and what changed
 5. **Edge cases** — auth, validation, ownership (403), terminal status rules
 
-Maintain `AI-NOTES.md` after each meaningful session.
+Maintain [AI-NOTES.md](../AI-NOTES.md) after each meaningful session.
+
+---
+
+**See also:** [Prompt vs result](genai-prompt-vs-result.md) · [Interview walkthrough](interview-walkthrough.md) · [Agent handoff](../AGENT-HANDOFF.md)

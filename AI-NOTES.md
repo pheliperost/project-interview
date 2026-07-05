@@ -2,7 +2,18 @@
 
 Log of meaningful AI-assisted sessions: what was suggested, what was accepted/rejected/changed, and what verified it.
 
+> **See also:** [README](README.md) · [Documentation map](README.md#documentation-map) · [User stories](docs/user-stories.md) · [GenAI prompt](docs/genai-scaffold-prompt.md) · [Agent handoff](AGENT-HANDOFF.md)
+
 ---
+
+## Lint and static analysis (2026-07-05)
+
+- **User request:** Add lint to the project with solid verification checks.
+- **Frontend:** Expanded `client/.oxlintrc.json` — oxlint categories (`correctness`, `suspicious`, `perf`), plugins (react, typescript, import, jsx-a11y, unicorn, promise). Scripts: `typecheck`, `lint`, `lint:fix`, `verify`.
+- **Backend:** Root `Directory.Build.props` (NET analyzers, `AnalysisLevel=latest`) + `.editorconfig` (C# style, naming, analyzer severities).
+- **CI:** `.github/workflows/ci.yml` now runs `npm run verify` before client build.
+- **Fixes:** `KanbanColumn` shadowed `status`; `useMediaQuery` null check; `AppDrawer`/`TaskEditor` use semantic `<dialog>` for a11y lint.
+- **Verified:** `npm run verify` (pass), `dotnet build` Release (pass), `dotnet test` Release (pass).
 
 ## README restructure (2026-07-05)
 
@@ -133,3 +144,19 @@ Log of meaningful AI-assisted sessions: what was suggested, what was accepted/re
 
 - **Changes:** `MapperFixtures` + `MapperCollection` for `TaskProfileTests`; `TaskServiceTests` calls `CreateService()` per test (before mock setup); `IntegrationTestsFixture.JsonOptions` shared across API tests; removed empty `TaskServiceFixtures.Dispose`.
 - **Verified:** `dotnet test` (66 unit + 45 integration pass).
+
+## Password reset — demo card (2026-07-05)
+
+- **User request:** Forgot/reset password using Identity tokens; no real email; demo card on forgot page when account exists; tests with `FakeEmailSender`.
+- **Implemented:** `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`; `ForgotPasswordResponse` includes `resetLink` when user exists; `FakeEmailSender` captures send calls; `ForgotPasswordPage` amber demo card; `ResetPasswordPage`; README demo section.
+- **Verified:** `dotnet test` (123 pass — 73 unit + 50 integration), `npm run build`.
+
+## Test symmetry — success/failure pairs (2026-07-05)
+
+- **User request:** Add missing success/failure cases across all tests, including password reset and fake email.
+- **Added:** Password reset integration (invalid email, weak password); AuthService (invalid forgot payload, unknown user on reset); validator happy paths; Auth/Tasks/CrossHost integration pairs; JWT validate/wrong secret; `FakeEmailSenderTests`; repository empty results; TaskProfile/Notification/AppExceptionHandler gaps.
+- **Verified:** `dotnet test` (154 pass — 91 unit + 63 integration).
+
+---
+
+**See also:** [README](README.md) · [User stories](docs/user-stories.md) · [GenAI prompt](docs/genai-scaffold-prompt.md) · [Agent handoff](AGENT-HANDOFF.md)

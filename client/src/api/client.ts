@@ -1,4 +1,4 @@
-import type { AuthResponse, KanbanStatus, Task, TaskFilters, TaskListResponse } from './types';
+import type { AuthResponse, ForgotPasswordResponse, KanbanStatus, ResetPasswordResponse, Task, TaskFilters, TaskListResponse } from './types';
 
 const TOKEN_KEY = 'simple_tasks_token';
 const EMAIL_KEY = 'simple_tasks_email';
@@ -70,7 +70,12 @@ export function getEmail() {
 
 function isPublicAuthPath(path: string) {
   const base = path.split('?')[0];
-  return base === '/api/auth/login' || base === '/api/auth/register';
+  return (
+    base === '/api/auth/login' ||
+    base === '/api/auth/register' ||
+    base === '/api/auth/forgot-password' ||
+    base === '/api/auth/reset-password'
+  );
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -158,6 +163,18 @@ export const api = {
     }),
 
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
+
+  forgotPassword: (email: string) =>
+    request<ForgotPasswordResponse>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (email: string, token: string, newPassword: string) =>
+    request<ResetPasswordResponse>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, token, newPassword }),
+    }),
 
   getTasks: async (filters: TaskFilters) => {
     const params = new URLSearchParams();

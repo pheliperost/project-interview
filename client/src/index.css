@@ -27,89 +27,322 @@
 
 :root {
   color-scheme: dark;
+  --vp-w: 100%;
+  --vp-h: 100%;
 }
 
 html,
 body {
-  height: 100%;
-  width: 100%;
+  margin: 0;
+  height: var(--vp-h);
+  width: var(--vp-w);
   overflow: hidden;
   overflow-x: clip;
+  overscroll-behavior: none;
+}
+
+html.scroll-locked,
+body.scroll-locked {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+html.scroll-locked #root {
+  overflow: hidden !important;
+  pointer-events: none;
 }
 
 #root {
-  height: 100%;
-  min-height: 100svh;
-  width: 100%;
+  height: var(--vp-h);
+  width: var(--vp-w);
   overflow: hidden;
   overflow-x: clip;
+}
+
+#overlays {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--vp-w);
+  height: var(--vp-h);
+  pointer-events: none;
+  z-index: 100;
+  overflow: visible;
+}
+
+#overlays > * {
+  pointer-events: auto;
 }
 
 .app-shell {
-  height: 100%;
+  height: var(--vp-h);
+  width: var(--vp-w);
   min-height: 0;
-  width: 100%;
   overflow: hidden;
   overflow-x: clip;
 }
 
-.auth-shell {
-  height: 100%;
-  min-height: 100svh;
+.board-main {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  contain: inline-size;
+}
+
+.kanban-area {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-shell {
+  height: var(--vp-h);
+  width: var(--vp-w);
   overflow-x: clip;
   overflow-y: auto;
 }
 
 .sidebar-filters {
-  width: clamp(14rem, 20%, 18rem);
+  width: 18rem;
 }
 
-/* Mobile: column width as % of kanban scroll container (not vw — vw breaks in DevTools device mode) */
+/* Fixed rem columns — stable in DevTools device mode (no vw/%). */
 .kanban-column {
-  flex: 0 0 88%;
-  width: 88%;
-  min-width: 88%;
-  max-width: 88%;
+  flex: 0 0 17.5rem;
+  width: 17.5rem;
+  min-width: 17.5rem;
+  max-width: 17.5rem;
+  max-height: 100%;
+  align-self: stretch;
 }
 
 @media (min-width: 640px) {
   .kanban-column {
-    flex: 0 0 clamp(12rem, 42%, 18rem);
-    width: clamp(12rem, 42%, 18rem);
-    min-width: clamp(12rem, 42%, 18rem);
-    max-width: 18rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .kanban-column {
-    flex: 0 0 clamp(13rem, 28%, 18rem);
-    width: clamp(13rem, 28%, 18rem);
-    min-width: clamp(13rem, 28%, 18rem);
-    max-width: 20rem;
+    flex: 0 0 16rem;
+    width: 16rem;
+    min-width: 16rem;
+    max-width: 16rem;
   }
 }
 
 @media (min-width: 1024px) {
   .kanban-column {
-    flex: 0 0 clamp(14rem, 16%, 20rem);
-    width: clamp(14rem, 16%, 20rem);
-    min-width: clamp(14rem, 16%, 20rem);
-    max-width: 20rem;
-  }
-
-  .sidebar-filters {
-    width: clamp(14rem, 18rem, 18rem);
+    flex: 0 0 18rem;
+    width: 18rem;
+    min-width: 18rem;
+    max-width: 18rem;
   }
 }
 
 .kanban-scroll {
+  flex: 1 1 0;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+
+.kanban-column-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* Task editor: mobile = left drawer, desktop (768px+) = centered modal */
+.task-editor-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--vp-w);
+  height: var(--vp-h);
+  z-index: 9999;
+  overflow: visible;
+  overscroll-behavior: none;
+}
+
+.task-editor-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  width: min(calc(100% - 0.75rem), 20rem);
+  max-width: 88%;
+  min-width: 0;
+  height: var(--vp-h);
+  max-height: var(--vp-h);
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: visible;
   overscroll-behavior: contain;
+  touch-action: auto;
+  border: 1px solid var(--color-border);
+  border-left: none;
+  border-radius: 0 0.75rem 0.75rem 0;
+  background: var(--color-popover);
+  color: var(--color-popover-foreground);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.45);
+}
+
+.task-editor-form {
+  display: flex;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: calc(var(--vp-h) - 3.25rem);
+  flex-direction: column;
+  overflow: visible;
+}
+
+.task-editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.task-editor-footer {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in oklch, var(--color-muted) 50%, transparent);
+  padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .task-editor-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .task-editor-panel {
+    position: relative;
+    top: auto;
+    left: auto;
+    bottom: auto;
+    height: auto;
+    width: 100%;
+    max-width: 32rem;
+    --task-editor-max-h: min(calc(var(--vp-h) - 2rem), 640px);
+    max-height: var(--task-editor-max-h);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+  }
+
+  .task-editor-form {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .task-editor-body {
+    flex: none;
+    min-height: unset;
+    max-height: calc(var(--task-editor-max-h) - 7.5rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .task-editor-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+    padding-bottom: 1rem;
+  }
+}
+
+.drawer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--vp-w);
+  height: var(--vp-h);
+  z-index: 200;
+  overflow: hidden;
+}
+
+/* Mobile left drawer — same shell behavior as task editor drawer */
+.app-drawer-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--vp-w);
+  height: var(--vp-h);
+  z-index: 9999;
+  overflow: visible;
+  overscroll-behavior: none;
+}
+
+.app-drawer-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  width: min(calc(100% - 0.75rem), 20rem);
+  max-width: 88%;
+  min-width: 0;
+  height: var(--vp-h);
+  max-height: var(--vp-h);
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: visible;
+  overscroll-behavior: contain;
+  touch-action: auto;
+  border: 1px solid var(--color-border);
+  border-left: none;
+  border-radius: 0 0.75rem 0.75rem 0;
+  background: var(--color-popover);
+  color: var(--color-popover-foreground);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.45);
+}
+
+.app-drawer-body {
+  display: flex;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: calc(var(--vp-h) - 3.25rem);
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem;
+}
+
+.app-drawer-panel .task-date-input {
+  position: relative;
+  z-index: 2;
+  min-height: 2rem;
+  touch-action: auto;
+}
+
+.app-drawer-panel .task-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 * {
@@ -121,4 +354,18 @@ input[type='date'] {
   display: block;
   max-width: 100%;
   min-width: 0;
+  touch-action: auto;
+}
+
+.task-editor-panel .task-date-input {
+  position: relative;
+  z-index: 2;
+  min-height: 2rem;
+}
+
+.task-editor-panel .task-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  width: 1.25rem;
+  height: 1.25rem;
 }

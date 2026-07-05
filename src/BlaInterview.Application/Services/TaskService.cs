@@ -12,16 +12,16 @@ public class TaskService : BaseService, ITaskService
 {
     private readonly ITaskRepository _repository;
     private readonly IMapper _mapper;
-    private readonly IValidator<CreateTaskRequest> _createValidator;
-    private readonly IValidator<UpdateTaskRequest> _updateValidator;
+    private readonly IValidator<CreateTaskBody> _createValidator;
+    private readonly IValidator<UpdateTaskBody> _updateValidator;
     private readonly IValidator<TaskFilterRequest> _filterValidator;
 
     public TaskService(
         ITaskRepository repository,
         IMapper mapper,
         INotifyer notifyer,
-        IValidator<CreateTaskRequest> createValidator,
-        IValidator<UpdateTaskRequest> updateValidator,
+        IValidator<CreateTaskBody> createValidator,
+        IValidator<UpdateTaskBody> updateValidator,
         IValidator<TaskFilterRequest> filterValidator)
         : base(notifyer)
     {
@@ -32,13 +32,13 @@ public class TaskService : BaseService, ITaskService
         _filterValidator = filterValidator;
     }
 
-    public async Task<TaskListResponse?> GetTasksAsync(string userId, TaskFilterRequest filter, CancellationToken cancellationToken = default)
+    public async Task<TaskListResponse?> GetTasksAsync(GetTasksRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await ValidateAsync(_filterValidator, filter, cancellationToken))
+        if (!await ValidateAsync(_filterValidator, request.Filter, cancellationToken))
             return null;
 
-        var query = _mapper.Map<TaskQuery>(filter);
-        var page = await _repository.GetByUserAsync(userId, query, cancellationToken);
+        var query = _mapper.Map<TaskQuery>(request.Filter);
+        var page = await _repository.GetByUserAsync(request.UserId, query, cancellationToken);
         return new TaskListResponse(
             page.Items.Select(item => _mapper.Map<TaskResponse>(item)).ToList(),
             page.TotalCount,
@@ -46,24 +46,24 @@ public class TaskService : BaseService, ITaskService
             query.PageSize);
     }
 
-    public async Task<TaskResponse?> GetTaskByIdAsync(string userId, Guid id, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> GetTaskByIdAsync(GetTaskByIdRequest request, CancellationToken cancellationToken = default)
     {
-        var task = await GetOwnedTaskAsync(userId, id, cancellationToken);
+        var task = await GetOwnedTaskAsync(request.UserId, request.TaskId, cancellationToken);
         if (task is null)
             return null;
 
         return _mapper.Map<TaskResponse>(task);
     }
 
-    public async Task<TaskResponse?> CreateTaskAsync(string userId, CreateTaskRequest request, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> CreateTaskAsync(CreateTaskRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await ValidateAsync(_createValidator, request, cancellationToken))
+        if (!await ValidateAsync(_createValidator, request.Body, cancellationToken))
             return null;
 
         var now = DateTimeOffset.UtcNow;
-        var task = _mapper.Map<Domain.Entities.TaskItem>(request, opt =>
+        var task = _mapper.Map<Domain.Entities.TaskItem>(request.Body, opt =>
         {
-            opt.Items[TaskProfile.UserIdContextKey] = userId;
+            opt.Items[TaskProfile.UserIdContextKey] = request.UserId;
             opt.Items[TaskProfile.NowContextKey] = now;
         });
         await _repository.AddAsync(task, cancellationToken);
@@ -71,32 +71,32 @@ public class TaskService : BaseService, ITaskService
         return _mapper.Map<TaskResponse>(task);
     }
 
-    public async Task<TaskResponse?> UpdateTaskAsync(string userId, Guid id, UpdateTaskRequest request, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> UpdateTaskAsync(UpdateTaskRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await ValidateAsync(_updateValidator, request, cancellationToken))
+        if (!await ValidateAsync(_updateValidator, request.Body, cancellationToken))
             return null;
 
-        var task = await GetOwnedTaskAsync(userId, id, cancellationToken);
+        var task = await GetOwnedTaskAsync(request.UserId, request.TaskId, cancellationToken);
         if (task is null)
             return null;
 
-        if (task.IsTerminal && request.Status != task.Status)
+        if (task.IsTerminal && request.Body.Status != task.Status)
         {
             Notify("Terminal tasks cannot change status via update. Use reactivate.");
             return null;
         }
 
-        if (IsDueDateChangedToPast(task.DueDate, request.DueDate))
+        if (IsDueDateChangedToPast(task.DueDate, request.Body.DueDate))
         {
             Notify("Due date cannot be in the past.");
             return null;
         }
 
-        task.Title = request.Title;
-        task.Description = request.Description;
-        task.Priority = request.Priority;
-        task.DueDate = request.DueDate;
-        task.Status = request.Status;
+        task.Title = request.Body.Title;
+        task.Description = request.Body.Description;
+        task.Priority = request.Body.Priority;
+        task.DueDate = request.Body.DueDate;
+        task.Status = request.Body.Status;
         task.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _repository.UpdateAsync(task, cancellationToken);
@@ -104,9 +104,9 @@ public class TaskService : BaseService, ITaskService
         return _mapper.Map<TaskResponse>(task);
     }
 
-    public async Task DeleteTaskAsync(string userId, Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteTaskAsync(DeleteTaskRequest request, CancellationToken cancellationToken = default)
     {
-        var task = await GetOwnedTaskAsync(userId, id, cancellationToken);
+        var task = await GetOwnedTaskAsync(request.UserId, request.TaskId, cancellationToken);
         if (task is null)
             return;
 
@@ -114,9 +114,9 @@ public class TaskService : BaseService, ITaskService
         await _repository.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<TaskResponse?> ReactivateAsync(string userId, Guid id, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> ReactivateAsync(ReactivateTaskRequest request, CancellationToken cancellationToken = default)
     {
-        var task = await GetOwnedTaskAsync(userId, id, cancellationToken);
+        var task = await GetOwnedTaskAsync(request.UserId, request.TaskId, cancellationToken);
         if (task is null)
             return null;
 

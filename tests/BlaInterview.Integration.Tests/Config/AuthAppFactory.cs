@@ -14,7 +14,8 @@ public static class IntegrationTestConfiguration
         ["Jwt:Secret"] = JwtSecret,
         ["Jwt:Issuer"] = "SimpleTasks",
         ["Jwt:Audience"] = "SimpleTasks",
-        ["Jwt:ExpiryMinutes"] = "60"
+        ["Jwt:ExpiryMinutes"] = "60",
+        ["PasswordReset:ClientBaseUrl"] = "http://localhost:5173"
     };
 
     public static void Apply(IWebHostBuilder builder, string databasePath)

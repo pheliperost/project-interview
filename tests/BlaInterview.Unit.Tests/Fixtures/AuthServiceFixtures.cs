@@ -2,11 +2,13 @@ using BlaInterview.Application.DTOs;
 using BlaInterview.Application.Interfaces;
 using BlaInterview.Application.Validators;
 using BlaInterview.Infrastructure.Identity;
+using BlaInterview.Infrastructure.Options;
 using BlaInterview.Infrastructure.Services;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace BlaInterview.Unit.Tests.Fixtures;
@@ -21,8 +23,11 @@ public class AuthServiceFixtures
     public Mock<UserManager<ApplicationUser>> UserManager { get; private set; } = null!;
     public Mock<SignInManager<ApplicationUser>> SignInManager { get; private set; } = null!;
     public Mock<IJwtTokenService> JwtTokenService { get; private set; } = null!;
+    public Mock<IEmailSender> EmailSender { get; private set; } = null!;
     public Mock<IValidator<RegisterRequest>> RegisterValidator { get; private set; } = null!;
     public Mock<IValidator<LoginRequest>> LoginValidator { get; private set; } = null!;
+    public Mock<IValidator<ForgotPasswordRequest>> ForgotPasswordValidator { get; private set; } = null!;
+    public Mock<IValidator<ResetPasswordRequest>> ResetPasswordValidator { get; private set; } = null!;
 
     public AuthService CreateService()
     {
@@ -44,6 +49,11 @@ public class AuthServiceFixtures
             .Returns((string userId, string email) =>
                 new AuthResponse("test-token", DateTimeOffset.UtcNow.AddHours(1), email));
 
+        EmailSender = new Mock<IEmailSender>();
+        EmailSender
+            .Setup(e => e.SendPasswordResetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         RegisterValidator = new Mock<IValidator<RegisterRequest>>();
         RegisterValidator
             .Setup(v => v.ValidateAsync(It.IsAny<RegisterRequest>(), It.IsAny<CancellationToken>()))
@@ -54,12 +64,26 @@ public class AuthServiceFixtures
             .Setup(v => v.ValidateAsync(It.IsAny<LoginRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
+        ForgotPasswordValidator = new Mock<IValidator<ForgotPasswordRequest>>();
+        ForgotPasswordValidator
+            .Setup(v => v.ValidateAsync(It.IsAny<ForgotPasswordRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+
+        ResetPasswordValidator = new Mock<IValidator<ResetPasswordRequest>>();
+        ResetPasswordValidator
+            .Setup(v => v.ValidateAsync(It.IsAny<ResetPasswordRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
+
         return new AuthService(
             UserManager.Object,
             SignInManager.Object,
             JwtTokenService.Object,
+            EmailSender.Object,
+            Options.Create(new PasswordResetOptions { ClientBaseUrl = "http://localhost:5173" }),
             RegisterValidator.Object,
-            LoginValidator.Object);
+            LoginValidator.Object,
+            ForgotPasswordValidator.Object,
+            ResetPasswordValidator.Object);
     }
 
     public AuthService CreateServiceWithRealValidators()
@@ -77,17 +101,18 @@ public class AuthServiceFixtures
             null!, null!, null!, null!);
 
         JwtTokenService = new Mock<IJwtTokenService>();
-        JwtTokenService
-            .Setup(j => j.CreateToken(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns((string userId, string email) =>
-                new AuthResponse("test-token", DateTimeOffset.UtcNow.AddHours(1), email));
+        EmailSender = new Mock<IEmailSender>();
 
         return new AuthService(
             UserManager.Object,
             SignInManager.Object,
             JwtTokenService.Object,
+            EmailSender.Object,
+            Options.Create(new PasswordResetOptions { ClientBaseUrl = "http://localhost:5173" }),
             new RegisterRequestValidator(),
-            new LoginRequestValidator());
+            new LoginRequestValidator(),
+            new ForgotPasswordRequestValidator(),
+            new ResetPasswordRequestValidator());
     }
 
     public static ApplicationUser CreateUser(string email = "user@example.local") =>

@@ -69,6 +69,25 @@ public class AppExceptionHandlerTests
         Assert.Equal("An unexpected error occurred.", body?["error"]);
     }
 
+    [Fact(DisplayName = "Handler should return true for handled exceptions.")]
+    [Trait("Category", "Exception Handler")]
+    public async Task AppExceptionHandler_ShouldReturnTrueWhenHandled()
+    {
+        // Arrange
+        var handler = CreateHandler();
+        var context = new DefaultHttpContext();
+        context.Response.Body = new MemoryStream();
+
+        // Act
+        var handled = await handler.TryHandleAsync(
+            context,
+            new AppException("Bad request.", 400),
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(handled);
+    }
+
     private static AppExceptionHandler CreateHandler()
     {
         var logger = new Mock<ILogger<AppExceptionHandler>>();

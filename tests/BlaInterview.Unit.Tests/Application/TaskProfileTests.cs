@@ -45,12 +45,12 @@ public class TaskProfileTests
         Assert.Single(response.Items);
     }
 
-    [Fact(DisplayName = "CreateTaskRequest should default status to Todo.")]
+    [Fact(DisplayName = "CreateTaskBody should default status to Todo.")]
     [Trait("Category", "Task Mapper")]
     public void TaskProfile_CreateEntity_ShouldDefaultTodo()
     {
         var now = DateTimeOffset.UtcNow;
-        var request = new CreateTaskRequest("New task", "Desc", null, null);
+        var request = new CreateTaskBody("New task", "Desc", null, null);
         var entity = _fixtures.Mapper.Map<TaskItem>(request, opt =>
         {
             opt.Items[TaskProfile.UserIdContextKey] = "user1";
@@ -74,5 +74,27 @@ public class TaskProfileTests
         Assert.Equal(task.Title, response.Title);
         Assert.Equal(task.Status, response.Status);
         Assert.Equal(task.Priority, response.Priority);
+    }
+
+    [Fact(DisplayName = "Empty filter should map default pagination.")]
+    [Trait("Category", "Task Mapper")]
+    public void TaskProfile_ToQuery_EmptyFilter_ShouldUseDefaults()
+    {
+        var filter = new TaskFilterRequest(null, null, null, null, null, null, null, null);
+        var query = _fixtures.Mapper.Map<TaskQuery>(filter);
+
+        Assert.Null(query.SearchTerm);
+        Assert.Equal(TaskPagination.DefaultPage, query.Page);
+        Assert.Equal(TaskPagination.DefaultPageSize, query.PageSize);
+    }
+
+    [Fact(DisplayName = "Whitespace search should trim to empty and map null.")]
+    [Trait("Category", "Task Mapper")]
+    public void TaskProfile_ToQuery_WhitespaceSearch_ShouldMapNull()
+    {
+        var filter = new TaskFilterRequest("   ", null, null, null, null, null, null, null);
+        var query = _fixtures.Mapper.Map<TaskQuery>(filter);
+
+        Assert.Null(query.SearchTerm);
     }
 }

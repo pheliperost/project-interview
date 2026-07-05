@@ -3,17 +3,16 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { lockPageScroll, unlockPageScroll } from '@/lib/scrollLock';
-import { cn } from '@/lib/utils';
+import { getOverlayRoot } from '@/lib/overlayRoot';
 
 interface AppDrawerProps {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
-  className?: string;
 }
 
-export function AppDrawer({ open, onClose, title, children, className }: AppDrawerProps) {
+export function AppDrawer({ open, onClose, title, children }: AppDrawerProps) {
   const titleId = useId();
 
   useEffect(() => {
@@ -34,23 +33,19 @@ export function AppDrawer({ open, onClose, title, children, className }: AppDraw
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] overflow-hidden">
+    <div className="app-drawer-shell">
       <button
         type="button"
         className="absolute inset-0 bg-black/60"
         aria-label="Close drawer"
         onClick={onClose}
       />
-
       <aside
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={cn(
-          'absolute inset-y-0 left-0 flex w-[min(calc(100%-0.75rem),20rem)] max-w-[85%] flex-col overflow-hidden rounded-r-xl border border-border bg-popover text-popover-foreground shadow-2xl',
-          className,
-        )}
-        onClick={(event) => event.stopPropagation()}
+        className="app-drawer-panel"
+        onClick={(e) => e.stopPropagation()}
       >
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
           <h2 id={titleId} className="text-base font-medium leading-none">
@@ -60,9 +55,9 @@ export function AppDrawer({ open, onClose, title, children, className }: AppDraw
             <X size={16} />
           </Button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
+        <div className="app-drawer-body">{children}</div>
       </aside>
     </div>,
-    document.body,
+    getOverlayRoot(),
   );
 }

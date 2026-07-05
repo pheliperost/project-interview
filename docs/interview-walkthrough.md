@@ -2,6 +2,8 @@
 
 A 5–10 minute script for presenting the technical interview project.
 
+> **See also:** [README](../README.md) (setup & API) · [User stories](user-stories.md) · [GenAI prompt](genai-scaffold-prompt.md) · [AI-NOTES](../AI-NOTES.md)
+
 ---
 
 ## Before you start
@@ -125,7 +127,7 @@ Highlights to mention:
 | Prompt used to scaffold | [genai-scaffold-prompt.md](genai-scaffold-prompt.md) |
 | Prompt vs as-built delta | [genai-prompt-vs-result.md](genai-prompt-vs-result.md) |
 | Sample output code | [README.md](../README.md) — GenAI workflow section |
-| How AI output was validated | `AI-NOTES.md` — build/test, gap review, manual fixes |
+| How AI output was validated | [AI-NOTES.md](../AI-NOTES.md) — build/test, gap review, manual fixes |
 | Corrections / edge cases | JWT scheme fix, `KanbanStatus` rename, enum JSON, per-user seeding, two-API split |
 
 Example narrative: *“I aligned scope in Phase 1 before coding, used GenAI to scaffold Clean Architecture, then verified with `dotnet test` and fixed issues the AI missed (Identity vs Bearer, SQLite sorting, seed visibility). The prompt targeted a single API; I split auth and tasks to match the exercise and fixed three AI gaps found in testing.”*
@@ -154,3 +156,7 @@ Demo user should always see **8 cards**. If not:
 1. Sign in as **demo@example.local** / **Demo123!** (not a newly registered user).
 2. Start **Auth API first**, then Tasks API, then client.
 3. Delete `src/BlaInterview.Auth.Api/tasks.db` and restart both APIs.
+
+---
+
+**See also:** [README](../README.md) · [User stories](user-stories.md) · [Prompt vs result](genai-prompt-vs-result.md)

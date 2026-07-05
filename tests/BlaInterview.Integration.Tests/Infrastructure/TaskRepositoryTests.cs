@@ -214,4 +214,36 @@ public class TaskRepositoryTests
         // Assert
         Assert.Null(task);
     }
+
+    [Fact(DisplayName = "Searching with no matches should return empty page.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByUserAsync_SearchNoMatch_ShouldReturnEmpty()
+    {
+        // Arrange
+        await _fixtures.SeedDefaultTasksAsync();
+        var query = new TaskQuery("__no_match__", null, null, null, null, null, 1, 100);
+
+        // Act
+        var page = await _fixtures.Repository.GetByUserAsync("user1", query);
+
+        // Assert
+        Assert.Empty(page.Items);
+        Assert.Equal(0, page.TotalCount);
+    }
+
+    [Fact(DisplayName = "Filtering by status with no matches should return empty page.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByUserAsync_FilterNoMatch_ShouldReturnEmpty()
+    {
+        // Arrange
+        await _fixtures.SeedDefaultTasksAsync();
+        var query = new TaskQuery(null, [KanbanStatus.OnHold], null, null, null, null, 1, 100);
+
+        // Act
+        var page = await _fixtures.Repository.GetByUserAsync("user1", query);
+
+        // Assert
+        Assert.Empty(page.Items);
+        Assert.Equal(0, page.TotalCount);
+    }
 }

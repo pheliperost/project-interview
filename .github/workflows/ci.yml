@@ -27,10 +27,14 @@ jobs:
           cache-dependency-path: client/package-lock.json
 
       - name: Restore and test .NET
-        run: dotnet test BlaInterview.slnx --configuration Release
+        run: |
+          dotnet restore BlaInterview.slnx
+          dotnet build BlaInterview.slnx --configuration Release --no-restore
+          dotnet test BlaInterview.slnx --configuration Release --no-build
 
-      - name: Install and build client
+      - name: Install and verify client
         working-directory: client
         run: |
           npm ci
+          npm run verify
           npm run build

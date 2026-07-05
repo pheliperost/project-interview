@@ -6,8 +6,8 @@ Personal Kanban task board built with **Clean Architecture** (.NET) and **React 
 
 - **Product:** Six-column Kanban — drag-and-drop, priorities, due dates, search/filters, terminal Done/Canceled with reactivate
 - **Backend:** Segregated **Auth API** (`:5098`) and **Tasks API** (`:5099`) sharing one SQLite database
-- **Quality:** **105 tests** (60 unit + 45 integration), FluentValidation, ASP.NET Core Identity + JWT
-- **GenAI:** Scope aligned before coding; prompt, sample output, and corrections documented in [`docs/`](docs/)
+- **Quality:** **154 tests** (91 unit + 63 integration), FluentValidation, ASP.NET Core Identity + JWT
+- **GenAI:** Scope aligned before coding — [prompt](docs/genai-scaffold-prompt.md), [prompt vs result](docs/genai-prompt-vs-result.md), [session log](AI-NOTES.md)
 
 ## User story
 
@@ -19,7 +19,7 @@ Personal Kanban task board built with **Clean Architecture** (.NET) and **React 
 
 | # | Story | Outcome |
 |---|--------|---------|
-| S1 | Register, log in, log out | JWT session; auto-login after register |
+| S1 | Register, log in, log out, forgot password | JWT session; auto-login after register; demo reset link card |
 | S2 | Private task ownership | My tasks only; another user's ID → 403 |
 | S3 | Create and edit tasks | Title, description, priority, optional due date; validation on save |
 | S4 | Kanban board view | Six columns; priority badges and due-date urgency |
@@ -27,7 +27,7 @@ Personal Kanban task board built with **Clean Architecture** (.NET) and **React 
 | S6 | Reactivate finished work | Terminal columns: reopen via dedicated endpoint → To Do |
 | S7 | Search and filter | Sidebar filters; non-matching cards hidden while filtered |
 
-Full acceptance criteria for each story live in `docs/user-stories.md` (optional deep-dive for reviewers).
+Full acceptance criteria for each story: [docs/user-stories.md](docs/user-stories.md) (optional deep-dive for reviewers).
 
 ## Stack
 
@@ -39,8 +39,6 @@ Full acceptance criteria for each story live in `docs/user-stories.md` (optional
 | Validation | FluentValidation |
 | Tests | xUnit, Moq, WebApplicationFactory |
 | Frontend | React 19, Vite, TypeScript, TanStack Query, Tailwind, @dnd-kit |
-
-> **Note:** Built with .NET 10 SDK on this machine. Patterns match the .NET 8 exercise intent.
 
 ## How the APIs work together
 
@@ -74,7 +72,7 @@ Auth API owns users (Identity). Tasks API validates the same JWT but never issue
 src/           # Domain, Application, Infrastructure, Api.Shared, Auth.Api, Tasks.Api
 tests/         # BlaInterview.Unit.Tests + BlaInterview.Integration.Tests
 client/        # React frontend
-docs/          # user stories, GenAI prompt, interview walkthrough
+docs/          # user stories, GenAI prompt, interview walkthrough — see [Documentation map](#documentation-map)
 ```
 
 ## Prerequisites
@@ -88,10 +86,10 @@ Copy the example settings so both APIs share the same signing key:
 
 ```bash
 cd src/BlaInterview.Auth.Api
-cp appsettings.Development.json.example appsettings.Development.json   # PowerShell: Copy-Item ...
+cp appsettings.Development.example.json appsettings.Development.json   # PowerShell: Copy-Item ...
 
 cd ../BlaInterview.Tasks.Api
-cp appsettings.Development.json.example appsettings.Development.json
+cp appsettings.Development.example.json appsettings.Development.json
 ```
 
 `appsettings.Development.json` is gitignored. Committed `appsettings.json` uses a non-functional placeholder — tokens will not work until both APIs share the same `Jwt:Secret` (≥ 32 characters) via Development settings or `Jwt__Secret` env var. Integration tests inject their own JWT settings and do not need this file.
@@ -121,6 +119,8 @@ The Vite dev server proxies `/api/auth` → 5098 and `/api/tasks` → 5099.
 |--------|-------|--------|
 | POST | `/api/auth/register` | Public |
 | POST | `/api/auth/login` | Public |
+| POST | `/api/auth/forgot-password` | Public — demo returns reset link in response when account exists |
+| POST | `/api/auth/reset-password` | Public |
 | GET | `/api/health` | Public |
 | POST | `/api/auth/logout` | Bearer JWT |
 
@@ -141,7 +141,7 @@ Unauthenticated calls to Tasks routes return **401**.
 
 | User | Email | Password | Purpose |
 |------|-------|----------|---------|
-| Primary | `demo@example.local` | `Demo123!` | **8 seeded tasks** across all columns |
+| Primary | `demo@example.local` | `Demo123!` | **8 seeded tasks** across all columns ([seed scenarios](docs/user-stories.md#seed-data-scenarios-demo)) |
 | Secondary | `other@example.local` | `Other123!` | 4 tasks + 403 ownership demo |
 
 On first start in **Development**, the database is migrated and seeded. The demo account gets **8 tasks** (2 To Do, 2 In Progress, 1 On Hold, 1 In Review, 1 Completed, 1 Cancelled). New registrations start with an **empty board**. Login form is pre-filled with demo credentials.
@@ -154,13 +154,21 @@ On first start in **Development**, the database is migrated and seeded. The demo
 
 **403 ownership check:** Log in as demo in Swagger, copy a task ID from `other@example.local`'s list, call `GET /api/tasks/{id}` with demo's token → **403**. Covered by `TaskOwnershipTests`.
 
+### Password reset (demo only)
+
+Uses ASP.NET Core Identity reset tokens (`GeneratePasswordResetTokenAsync` / `ResetPasswordAsync`). **No real email is sent** — a `FakeEmailSender` records the reset link for tests only.
+
+For the interview demo, when the email **exists**, the API includes `resetLink` in the forgot-password response and the UI shows an amber **Demo only** card with a button to open the reset page. Unknown emails get the same generic message with **no card** (no link leaked). In production you would send the link by email and never return it in the API body.
+
+Try it: Sign in page → **Forgot password?** → `demo@example.local` → open reset link → set a new password → sign in.
+
 ## Tests
 
 ```bash
 dotnet test
 ```
 
-**Last verified:** **105 pass** — 60 unit + 45 integration.
+**Last verified:** **154 pass** — 91 unit + 63 integration.
 
 | Assembly | Focus |
 |----------|--------|
@@ -168,6 +176,22 @@ dotnet test
 | `BlaInterview.Integration.Tests` | Dual-host WAF (Auth + Tasks factories), repository, ownership, filters |
 
 Filter by trait: `dotnet test --filter "Category=Task Service"`. Optional coverage: `dotnet test --collect:"XPlat Code Coverage"`.
+
+## Lint and static analysis
+
+**Frontend** (`client/`):
+
+```bash
+cd client
+npm run lint        # oxlint (correctness, React, TypeScript, a11y, import)
+npm run lint:fix    # auto-fix where supported
+npm run typecheck   # tsc -b
+npm run verify      # typecheck + lint
+```
+
+**Backend** (repo root): `Directory.Build.props` enables .NET analyzers (`AnalysisLevel=latest`, `AnalysisMode=Recommended`). Style rules live in `.editorconfig`.
+
+CI runs `dotnet build`, `dotnet test`, `npm run verify`, and `npm run build` on every push/PR.
 
 ## GenAI workflow
 
@@ -202,9 +226,10 @@ public class TasksController : BaseController
 
     [HttpPost]
     public async Task<ActionResult<TaskResponse>> CreateTask(
-        CreateTaskRequest request, CancellationToken cancellationToken)
+        CreateTaskBody body, CancellationToken cancellationToken)
     {
-        var task = await _taskService.CreateTaskAsync(UserId, request, cancellationToken);
+        var task = await _taskService.CreateTaskAsync(
+            new CreateTaskRequest(UserId, body), cancellationToken);
         if (!ValidOperation())
             return NotificationError();
 
@@ -212,6 +237,8 @@ public class TasksController : BaseController
     }
 }
 ```
+
+Full API contract and domain rules: [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md). Story acceptance criteria: [docs/user-stories.md](docs/user-stories.md).
 
 ### Validation and corrections
 

@@ -1,7 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using BlaInterview.Infrastructure.Options;
 using BlaInterview.Infrastructure.Services;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BlaInterview.Unit.Tests.Infrastructure;
 
@@ -80,10 +83,73 @@ public class JwtTokenServiceTests
         Assert.NotEqual(firstJti, secondJti);
     }
 
-    private static JwtTokenService CreateService(int expiryMinutes = 60) =>
+    [Fact(DisplayName = "CreateToken should validate with the same signing key.")]
+    [Trait("Category", "Jwt Token Service")]
+    public void JwtTokenService_CreateToken_ShouldValidateWithSameSecret()
+    {
+        // Arrange
+        var response = Service.CreateToken("user-1", "user@example.local");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestSecret));
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "TestIssuer",
+            ValidateAudience = true,
+            ValidAudience = "TestAudience",
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = key,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+
+        // Act
+        var principal = new JwtSecurityTokenHandler().ValidateToken(response.Token, parameters, out _);
+
+        // Assert
+        var sub = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Assert.Equal("user-1", sub);
+    }
+
+    [Fact(DisplayName = "CreateToken should not validate with a different signing key.")]
+    [Trait("Category", "Jwt Token Service")]
+    public void JwtTokenService_CreateToken_WrongSecret_ShouldFailValidation()
+    {
+        // Arrange
+        var response = Service.CreateToken("user-1", "user@example.local");
+        var wrongKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("wrong-secret-key-at-least-32-chars!!"));
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "TestIssuer",
+            ValidateAudience = true,
+            ValidAudience = "TestAudience",
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = wrongKey,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+
+        // Act & Assert
+        Assert.ThrowsAny<Exception>(() =>
+            new JwtSecurityTokenHandler().ValidateToken(response.Token, parameters, out _));
+    }
+
+    [Fact(DisplayName = "CreateToken with short secret should throw.")]
+    [Trait("Category", "Jwt Token Service")]
+    public void JwtTokenService_CreateToken_ShortSecret_ShouldThrow()
+    {
+        // Arrange
+        var service = CreateService(secret: "short");
+
+        // Act & Assert
+        Assert.ThrowsAny<Exception>(() => service.CreateToken("user-1", "user@example.local"));
+    }
+
+    private static JwtTokenService CreateService(int expiryMinutes = 60, string secret = TestSecret) =>
         new(Options.Create(new JwtSettings
         {
-            Secret = TestSecret,
+            Secret = secret,
             Issuer = "TestIssuer",
             Audience = "TestAudience",
             ExpiryMinutes = expiryMinutes

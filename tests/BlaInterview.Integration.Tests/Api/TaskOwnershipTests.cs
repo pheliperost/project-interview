@@ -13,6 +13,21 @@ public class TaskOwnershipTests
 
     public TaskOwnershipTests(IntegrationTestsFixture fixture) => _fixture = fixture;
 
+    [Fact(DisplayName = "Getting own task should return 200.")]
+    [Trait("Category", "Integration Web - Tasks")]
+    public async Task Task_Get_OwnTask_ShouldReturnOk()
+    {
+        // Arrange
+        var demoClient = await _fixture.CreateAuthenticatedTasksClientAsync();
+        var ownTask = await _fixture.GetDemoTaskAsync();
+
+        // Act
+        var response = await demoClient.GetAsync($"/api/tasks/{ownTask.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     [Fact(DisplayName = "Getting another user's task should return 403.")]
     [Trait("Category", "Integration Web - Tasks")]
     public async Task Task_Get_OtherUsersTask_ShouldReturn403()
@@ -36,7 +51,7 @@ public class TaskOwnershipTests
         // Arrange
         var otherTaskId = await _fixture.GetSeededOtherUserTaskIdAsync();
         var demoClient = await _fixture.CreateAuthenticatedTasksClientAsync();
-        var body = new UpdateTaskRequest(
+        var body = new UpdateTaskBody(
             "Hijacked title",
             "Should not apply",
             KanbanStatus.Todo,

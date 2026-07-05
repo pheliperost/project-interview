@@ -52,7 +52,7 @@ public class TaskCrudTests
         // Arrange
         var client = await _fixture.CreateAuthenticatedTasksClientAsync();
         var created = await _fixture.CreateDemoTaskAsync();
-        var body = new UpdateTaskRequest(
+        var body = new UpdateTaskBody(
             "Updated title",
             "Updated description",
             KanbanStatus.InProgress,
@@ -76,7 +76,7 @@ public class TaskCrudTests
         // Arrange
         var client = await _fixture.CreateAuthenticatedTasksClientAsync();
         var created = await _fixture.CreateDemoTaskAsync();
-        var body = new UpdateTaskRequest(
+        var body = new UpdateTaskBody(
             created.Title,
             created.Description,
             created.Status,
@@ -97,7 +97,7 @@ public class TaskCrudTests
         // Arrange
         var client = await _fixture.CreateAuthenticatedTasksClientAsync();
         var created = await _fixture.CreateDemoTaskAsync();
-        var completeBody = new UpdateTaskRequest(
+        var completeBody = new UpdateTaskBody(
             created.Title,
             created.Description,
             KanbanStatus.Completed,
@@ -105,7 +105,7 @@ public class TaskCrudTests
             created.DueDate);
         await client.PutAsJsonAsync($"/api/tasks/{created.Id}", completeBody);
 
-        var body = new UpdateTaskRequest(
+        var body = new UpdateTaskBody(
             created.Title,
             created.Description,
             KanbanStatus.Todo,
@@ -144,7 +144,7 @@ public class TaskCrudTests
         // Arrange
         var client = await _fixture.CreateAuthenticatedTasksClientAsync();
         var created = await _fixture.CreateDemoTaskAsync();
-        var completeBody = new UpdateTaskRequest(
+        var completeBody = new UpdateTaskBody(
             created.Title,
             created.Description,
             KanbanStatus.Completed,
@@ -183,7 +183,7 @@ public class TaskCrudTests
     {
         // Arrange
         var client = await _fixture.CreateAuthenticatedTasksClientAsync();
-        var body = new CreateTaskRequest("", null, TaskPriority.Medium, null);
+        var body = new CreateTaskBody("", null, TaskPriority.Medium, null);
 
         // Act
         var response = await client.PostAsJsonAsync("/api/tasks", body);
@@ -198,7 +198,7 @@ public class TaskCrudTests
     {
         // Arrange
         var client = await _fixture.CreateAuthenticatedTasksClientAsync();
-        var body = new CreateTaskRequest(
+        var body = new CreateTaskBody(
             "Past due task",
             "A description",
             TaskPriority.Medium,
@@ -218,7 +218,7 @@ public class TaskCrudTests
         // Arrange
         var client = await _fixture.CreateAuthenticatedTasksClientAsync();
         var created = await _fixture.CreateDemoTaskAsync();
-        var cancelBody = new UpdateTaskRequest(
+        var cancelBody = new UpdateTaskBody(
             created.Title,
             created.Description,
             KanbanStatus.Cancelled,

@@ -7,17 +7,19 @@ namespace BlaInterview.Unit.Tests.Application;
 
 public class ValidatorTests
 {
-    private readonly CreateTaskRequestValidator _createValidator = new();
-    private readonly UpdateTaskRequestValidator _updateValidator = new();
+    private readonly CreateTaskBodyValidator _createValidator = new();
+    private readonly UpdateTaskBodyValidator _updateValidator = new();
     private readonly TaskFilterRequestValidator _filterValidator = new();
     private readonly RegisterRequestValidator _registerValidator = new();
     private readonly LoginRequestValidator _loginValidator = new();
+    private readonly ForgotPasswordRequestValidator _forgotPasswordValidator = new();
+    private readonly ResetPasswordRequestValidator _resetPasswordValidator = new();
 
     [Fact(DisplayName = "Create task validator should reject empty title.")]
     [Trait("Category", "Validators")]
     public void CreateTaskValidator_EmptyTitle_ShouldBeInvalid()
     {
-        var result = _createValidator.Validate(new CreateTaskRequest("", null, TaskPriority.Medium, null));
+        var result = _createValidator.Validate(new CreateTaskBody("", null, TaskPriority.Medium, null));
         Assert.False(result.IsValid);
     }
 
@@ -25,7 +27,7 @@ public class ValidatorTests
     [Trait("Category", "Validators")]
     public void CreateTaskValidator_PastDueDate_ShouldBeInvalid()
     {
-        var result = _createValidator.Validate(new CreateTaskRequest("Title", null, TaskPriority.Medium, DateTimeOffset.UtcNow.AddDays(-1)));
+        var result = _createValidator.Validate(new CreateTaskBody("Title", null, TaskPriority.Medium, DateTimeOffset.UtcNow.AddDays(-1)));
         Assert.False(result.IsValid);
     }
 
@@ -33,7 +35,7 @@ public class ValidatorTests
     [Trait("Category", "Validators")]
     public void CreateTaskValidator_NullDueDate_ShouldBeValid()
     {
-        var result = _createValidator.Validate(new CreateTaskRequest("Title", "A description", TaskPriority.Medium, null));
+        var result = _createValidator.Validate(new CreateTaskBody("Title", "A description", TaskPriority.Medium, null));
         Assert.True(result.IsValid);
     }
 
@@ -41,7 +43,7 @@ public class ValidatorTests
     [Trait("Category", "Validators")]
     public void CreateTaskValidator_EmptyDescription_ShouldBeInvalid()
     {
-        var result = _createValidator.Validate(new CreateTaskRequest("Title", "", TaskPriority.Medium, null));
+        var result = _createValidator.Validate(new CreateTaskBody("Title", "", TaskPriority.Medium, null));
         Assert.False(result.IsValid);
     }
 
@@ -49,7 +51,7 @@ public class ValidatorTests
     [Trait("Category", "Validators")]
     public void UpdateTaskValidator_PastDueDate_ShouldBeValid()
     {
-        var result = _updateValidator.Validate(new UpdateTaskRequest(
+        var result = _updateValidator.Validate(new UpdateTaskBody(
             "Title", "A description", KanbanStatus.Todo, TaskPriority.Medium, DateTimeOffset.UtcNow.AddDays(-1)));
         Assert.True(result.IsValid);
     }
@@ -109,6 +111,76 @@ public class ValidatorTests
     public void LoginValidator_ValidRequest_ShouldBeValid()
     {
         var result = _loginValidator.Validate(new LoginRequest("user@example.local", "Demo123!"));
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Forgot password validator should reject invalid email.")]
+    [Trait("Category", "Validators")]
+    public void ForgotPasswordValidator_InvalidEmail_ShouldBeInvalid()
+    {
+        var result = _forgotPasswordValidator.Validate(new ForgotPasswordRequest("not-an-email"));
+        Assert.False(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Reset password validator should reject short password.")]
+    [Trait("Category", "Validators")]
+    public void ResetPasswordValidator_ShortPassword_ShouldBeInvalid()
+    {
+        var result = _resetPasswordValidator.Validate(new ResetPasswordRequest("user@example.local", "token", "short"));
+        Assert.False(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Forgot password validator should accept valid email.")]
+    [Trait("Category", "Validators")]
+    public void ForgotPasswordValidator_ValidEmail_ShouldBeValid()
+    {
+        var result = _forgotPasswordValidator.Validate(new ForgotPasswordRequest("user@example.local"));
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Reset password validator should accept valid request.")]
+    [Trait("Category", "Validators")]
+    public void ResetPasswordValidator_ValidRequest_ShouldBeValid()
+    {
+        var result = _resetPasswordValidator.Validate(new ResetPasswordRequest("user@example.local", "token", "NewPass1!"));
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Filter validator should accept valid pagination.")]
+    [Trait("Category", "Validators")]
+    public void FilterValidator_ValidPagination_ShouldBeValid()
+    {
+        var result = _filterValidator.Validate(new TaskFilterRequest(null, null, null, null, null, null, 1, 50));
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Create task validator should accept valid request.")]
+    [Trait("Category", "Validators")]
+    public void CreateTaskValidator_ValidRequest_ShouldBeValid()
+    {
+        var result = _createValidator.Validate(new CreateTaskBody(
+            "Valid title",
+            "Valid description",
+            TaskPriority.High,
+            DateTimeOffset.UtcNow.AddDays(1)));
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Update task validator should reject empty title.")]
+    [Trait("Category", "Validators")]
+    public void UpdateTaskValidator_EmptyTitle_ShouldBeInvalid()
+    {
+        var result = _updateValidator.Validate(new UpdateTaskBody(
+            "", "Description", KanbanStatus.Todo, TaskPriority.Medium, null));
+        Assert.False(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Update task validator should accept valid request.")]
+    [Trait("Category", "Validators")]
+    public void UpdateTaskValidator_ValidRequest_ShouldBeValid()
+    {
+        var result = _updateValidator.Validate(new UpdateTaskBody(
+            "Title", "Description", KanbanStatus.InProgress, TaskPriority.High, null));
         Assert.True(result.IsValid);
     }
 }

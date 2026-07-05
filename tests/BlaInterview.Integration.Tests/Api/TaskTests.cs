@@ -83,4 +83,36 @@ public class TaskTests
         Assert.NotEmpty(list!.Items);
         Assert.All(list.Items, t => Assert.Equal(KanbanStatus.Completed, t.Status));
     }
+
+    [Fact(DisplayName = "Creating a task with empty title should return 400.")]
+    [Trait("Category", "Integration Web - Tasks")]
+    public async Task Task_Create_EmptyTitle_ShouldReturn400()
+    {
+        // Arrange
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
+        var body = new CreateTaskBody("", "Description", TaskPriority.Medium, null);
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/tasks", body);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "Searching with no matches should return empty list.")]
+    [Trait("Category", "Integration Web - Tasks")]
+    public async Task Task_GetList_SearchNoMatch_ShouldReturnEmpty()
+    {
+        // Arrange
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
+
+        // Act
+        var response = await client.GetAsync("/api/tasks?search=__no_match__");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(IntegrationTestsFixture.JsonOptions);
+        Assert.NotNull(list);
+        Assert.Empty(list!.Items);
+    }
 }

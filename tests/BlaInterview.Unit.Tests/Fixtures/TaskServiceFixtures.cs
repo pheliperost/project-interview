@@ -25,16 +25,16 @@ public class TaskServiceFixtures
     {
         Mocker = new AutoMocker();
         Mocker.Use<IMapper>(MapperFixtures.CreateMapper());
-        Mocker.Use<IValidator<CreateTaskRequest>>(new CreateTaskRequestValidator());
-        Mocker.Use<IValidator<UpdateTaskRequest>>(new UpdateTaskRequestValidator());
+        Mocker.Use<IValidator<CreateTaskBody>>(new CreateTaskBodyValidator());
+        Mocker.Use<IValidator<UpdateTaskBody>>(new UpdateTaskBodyValidator());
         Mocker.Use<IValidator<TaskFilterRequest>>(new TaskFilterRequestValidator());
         return Mocker.CreateInstance<TaskService>();
     }
 
-    public CreateTaskRequest GenerateValidCreateRequest()
+    public CreateTaskBody GenerateValidCreateRequest()
     {
-        return new Faker<CreateTaskRequest>()
-            .CustomInstantiator(f => new CreateTaskRequest(
+        return new Faker<CreateTaskBody>()
+            .CustomInstantiator(f => new CreateTaskBody(
                 f.Lorem.Sentence(3),
                 f.Lorem.Paragraph(),
                 f.PickRandom<TaskPriority>(),
@@ -42,23 +42,23 @@ public class TaskServiceFixtures
             .Generate();
     }
 
-    public CreateTaskRequest GenerateInvalidCreateRequestEmptyTitle()
+    public CreateTaskBody GenerateInvalidCreateRequestEmptyTitle()
     {
-        return new CreateTaskRequest(string.Empty, null, TaskPriority.Medium, null);
+        return new CreateTaskBody(string.Empty, null, TaskPriority.Medium, null);
     }
 
-    public CreateTaskRequest GenerateInvalidCreateRequestPastDueDate()
+    public CreateTaskBody GenerateInvalidCreateRequestPastDueDate()
     {
-        return new CreateTaskRequest(
+        return new CreateTaskBody(
             "Past due task",
             "A description",
             TaskPriority.Medium,
             DateTimeOffset.UtcNow.AddDays(-1));
     }
 
-    public UpdateTaskRequest GenerateInvalidUpdateRequestPastDueDate(KanbanStatus status = KanbanStatus.Todo)
+    public UpdateTaskBody GenerateInvalidUpdateRequestPastDueDate(KanbanStatus status = KanbanStatus.Todo)
     {
-        return new UpdateTaskRequest(
+        return new UpdateTaskBody(
             "Past due task",
             "A description",
             status,
@@ -66,12 +66,12 @@ public class TaskServiceFixtures
             DateTimeOffset.UtcNow.AddDays(-1));
     }
 
-    public UpdateTaskRequest GenerateValidUpdateRequest(
+    public UpdateTaskBody GenerateValidUpdateRequest(
         KanbanStatus status = KanbanStatus.InProgress,
         TaskPriority priority = TaskPriority.Medium)
     {
-        return new Faker<UpdateTaskRequest>()
-            .CustomInstantiator(f => new UpdateTaskRequest(
+        return new Faker<UpdateTaskBody>()
+            .CustomInstantiator(f => new UpdateTaskBody(
                 f.Lorem.Sentence(3),
                 f.Lorem.Paragraph(),
                 status,

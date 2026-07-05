@@ -41,10 +41,10 @@ public class IntegrationTestsFixture : IDisposable
         TasksFactory.CreateClient();
     }
 
-    public CreateTaskRequest GenerateValidCreateRequest()
+    public CreateTaskBody GenerateValidCreateRequest()
     {
-        return new Faker<CreateTaskRequest>()
-            .CustomInstantiator(f => new CreateTaskRequest(
+        return new Faker<CreateTaskBody>()
+            .CustomInstantiator(f => new CreateTaskBody(
                 f.Lorem.Sentence(3),
                 f.Lorem.Paragraph(),
                 TaskPriority.Medium,
@@ -102,7 +102,7 @@ public class IntegrationTestsFixture : IDisposable
         return task;
     }
 
-    public async Task<TaskResponse> CreateDemoTaskAsync(CreateTaskRequest? request = null)
+    public async Task<TaskResponse> CreateDemoTaskAsync(CreateTaskBody? request = null)
     {
         var client = await CreateAuthenticatedTasksClientAsync();
         request ??= GenerateValidCreateRequest();

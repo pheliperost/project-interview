@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { lockPageScroll, unlockPageScroll } from '@/lib/scrollLock';
+import { openDatePicker } from '@/lib/openDatePicker';
+import { getOverlayRoot } from '@/lib/overlayRoot';
 
 interface TaskEditorProps {
   open: boolean;
@@ -58,10 +60,13 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
   useEffect(() => {
     if (!open) return;
     lockPageScroll();
+
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose();
     }
+
     window.addEventListener('keydown', onKeyDown);
+
     return () => {
       unlockPageScroll();
       window.removeEventListener('keydown', onKeyDown);
@@ -92,22 +97,22 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
   const dialogTitle = task ? 'Edit task' : 'New task';
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex flex-col justify-end overflow-hidden md:items-center md:justify-center md:p-4">
+    <div className="task-editor-shell">
       <button
         type="button"
         className="absolute inset-0 bg-black/60"
         aria-label="Close"
         onClick={onClose}
       />
-      <div
+      <aside
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[92svh] w-full min-w-0 flex-col overflow-hidden rounded-t-2xl border border-border bg-popover text-popover-foreground shadow-2xl md:max-h-[min(90svh,640px)] md:max-w-lg md:rounded-xl"
+        className="task-editor-panel"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-4">
-          <h2 id={titleId} className="text-base font-medium leading-snug">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
+          <h2 id={titleId} className="text-base font-medium leading-none">
             {dialogTitle}
           </h2>
           <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close">
@@ -115,8 +120,8 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
           </Button>
         </header>
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4">
+        <form onSubmit={handleSubmit} className="task-editor-form">
+          <div className="task-editor-body">
             <div className="space-y-2">
               <Label htmlFor="task-title">Title</Label>
               <Input
@@ -146,7 +151,7 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent side="bottom">
                     {(['Low', 'Medium', 'High', 'Urgent'] as TaskPriority[]).map((p) => (
                       <SelectItem key={p} value={p}>
                         {p}
@@ -157,13 +162,14 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
               </div>
               <div className="min-w-0 space-y-2">
                 <Label htmlFor="task-due-date">Due date</Label>
-                <Input
+                <input
                   id="task-due-date"
                   type="date"
                   min={task ? undefined : todayLocalDateString()}
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="task-date-input w-full"
+                  onClick={openDatePicker}
+                  className="task-date-input h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
                 />
               </div>
             </div>
@@ -174,7 +180,7 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent side="top">
                     {COLUMNS.map((col) => (
                       <SelectItem key={col.status} value={col.status}>
                         {col.label}
@@ -186,7 +192,7 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
             )}
           </div>
 
-          <footer className="flex shrink-0 flex-col gap-2 border-t border-border bg-muted/50 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:flex-row md:justify-end">
+          <footer className="task-editor-footer">
             <Button type="button" variant="outline" className="w-full md:w-auto" onClick={onClose}>
               Cancel
             </Button>
@@ -195,8 +201,8 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
             </Button>
           </footer>
         </form>
-      </div>
+      </aside>
     </div>,
-    document.body,
+    getOverlayRoot(),
   );
 }

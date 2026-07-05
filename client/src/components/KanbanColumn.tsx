@@ -36,7 +36,7 @@ export function KanbanColumn({
           {tasks.length}
         </span>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-y-contain p-3">
+      <div className="kanban-column-body flex flex-col gap-3 p-3">
         {tasks.length === 0 ? (
           <p className="py-8 text-center text-xs text-zinc-600">No tasks in this column</p>
         ) : (
@@ -47,7 +47,7 @@ export function KanbanColumn({
               draggable={!terminal}
               onEdit={() => onEdit(task)}
               onDelete={() => onDelete(task.id)}
-              onMoveTo={(status) => onMoveTo(task.id, status)}
+              onMoveTo={(targetStatus) => onMoveTo(task.id, targetStatus)}
             />
           ))
         )}

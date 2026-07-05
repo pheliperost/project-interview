@@ -25,6 +25,15 @@ export interface AuthResponse {
   email: string;
 }
 
+export interface ForgotPasswordResponse {
+  message: string;
+  resetLink?: string | null;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
 export interface TaskListResponse {
   items: Task[];
   totalCount: number;

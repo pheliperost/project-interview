@@ -47,6 +47,24 @@ public class AuthExtendedTests
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact(DisplayName = "Logging in with valid credentials should return a JWT.")]
+    [Trait("Category", "Integration Web - Auth")]
+    public async Task Auth_Login_ValidCredentials_ShouldReturnToken()
+    {
+        // Arrange
+        var client = _fixture.AuthFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequest(IntegrationTestsFixture.DemoEmail, IntegrationTestsFixture.DemoPassword));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(IntegrationTestsFixture.JsonOptions);
+        Assert.False(string.IsNullOrWhiteSpace(auth?.Token));
+    }
+
     [Fact(DisplayName = "Registering duplicate email should return 409.")]
     [Trait("Category", "Integration Web - Auth")]
     public async Task Auth_Register_DuplicateEmail_ShouldReturn409()
@@ -167,6 +185,20 @@ public class AuthExtendedTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "Tasks API without token should return 401.")]
+    [Trait("Category", "Integration Web - Cross Host")]
+    public async Task CrossHost_WithoutToken_ShouldReturn401()
+    {
+        // Arrange
+        var client = _fixture.TasksFactory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync("/api/tasks");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     private async Task<HttpClient> CreateAuthenticatedAuthClientAsync()

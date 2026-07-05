@@ -77,12 +77,12 @@ export const KanbanBoard = forwardRef<HTMLDivElement, KanbanBoardProps>(function
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="kanban-area">
         <div
           ref={ref}
           data-kanban-scroll
           onWheel={handleWheel}
-          className="kanban-scroll flex h-full min-h-0 flex-1 gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none sm:gap-4"
+          className="kanban-scroll flex gap-3 overflow-x-auto overflow-y-hidden sm:gap-4"
         >
           {COLUMNS.map((col) => (
             <KanbanColumn

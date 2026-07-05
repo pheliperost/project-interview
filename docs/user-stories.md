@@ -3,6 +3,8 @@
 **App name:** Simple Tasks  
 **UI:** React 19 + Vite + TypeScript + **shadcn/ui** + TanStack Query
 
+> **See also:** [README](../README.md) (setup & demo) · [GenAI prompt](genai-scaffold-prompt.md) · [Demo script](interview-walkthrough.md) · [Session log](../AI-NOTES.md)
+
 ## Product narrative
 
 As a professional managing my own work, I want a secure personal Kanban board where I can create tasks with priorities and due dates, drag them across my workflow, and clearly mark work as done or canceled, so that I always know what to focus on next and can deliberately reopen work when plans change, without sharing or mixing tasks with other users.
@@ -25,7 +27,7 @@ As a professional managing my own work, I want a secure personal Kanban board wh
 
 - I can register with email and password (public route).
 - Password must meet security policy (min 8 chars, upper, lower, digit, special character).
-- I can log in and receive a JWT in the response (public route); token stored in `localStorage` for demo (see README for production tradeoff).
+- I can log in and receive a JWT in the response (public route); token stored in `localStorage` for demo (see [README](../README.md) for production tradeoff).
 - Invalid credentials are rejected with a clear error.
 - After successful register, I am **auto-logged in** and redirected to the board.
 - Duplicate email on register returns **400** or **409**.
@@ -167,3 +169,7 @@ As a professional managing my own work, I want a secure personal Kanban board wh
 - External identity providers (Clerk, Auth0)
 - Strict status transition matrix
 - Search in task description (title only)
+
+---
+
+**See also:** [README](../README.md) · [GenAI prompt](genai-scaffold-prompt.md) · [Prompt vs result](genai-prompt-vs-result.md) · [AI-NOTES](../AI-NOTES.md)

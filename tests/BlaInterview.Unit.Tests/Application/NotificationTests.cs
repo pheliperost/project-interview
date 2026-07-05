@@ -4,6 +4,15 @@ namespace BlaInterview.Unit.Tests.Application;
 
 public class NotificationTests
 {
+    [Fact(DisplayName = "Notifyer should not report notifications before handle.")]
+    [Trait("Category", "Notifications")]
+    public void Notifyer_InitialState_ShouldHaveNoNotifications()
+    {
+        var notifyer = new Notifyer();
+        Assert.False(notifyer.HasNotification());
+        Assert.Empty(notifyer.GetNotifications());
+    }
+
     [Fact(DisplayName = "Notifyer should report notifications after handle.")]
     [Trait("Category", "Notifications")]
     public void Notifyer_Handle_ShouldSetHasNotification()
@@ -30,5 +39,13 @@ public class NotificationTests
         var notification = new Notification("Forbidden", 403);
         Assert.Equal(403, notification.StatusCode);
         Assert.Equal("Forbidden", notification.Message);
+    }
+
+    [Fact(DisplayName = "Notification should default status code to 400.")]
+    [Trait("Category", "Notifications")]
+    public void Notification_DefaultStatusCode_ShouldBe400()
+    {
+        var notification = new Notification("Validation failed");
+        Assert.Equal(400, notification.StatusCode);
     }
 }

@@ -2,12 +2,12 @@
 
 The saved prompt in [genai-scaffold-prompt.md](genai-scaffold-prompt.md) is the **Phase 1 specification** — what was agreed before coding. The table below records intentional deviations found during implementation and testing.
 
+> **See also:** [README](../README.md) · [User stories](user-stories.md) · [AI-NOTES](../AI-NOTES.md) · [Agent handoff](../AGENT-HANDOFF.md)
 | Prompt / spec | As built | Why it changed |
 |---------------|----------|----------------|
 | Single `BlaInterview.Api` host | `Auth.Api` (:5098) + `Tasks.Api` (:5099) + `Api.Shared` | Segregated auth and task APIs per interview exercise |
 | AutoMapper | AutoMapper `TaskProfile` | Aligned with LessonsManagement; manual mapper replaced on user request |
 | 4 test projects (Domain, Application, Infrastructure, Api) | 2 assemblies (`Unit.Tests`, `Integration.Tests`) | LessonsManagement reference pattern; Moq.AutoMock + Bogus |
-| .NET 8 | .NET 10 (`net10.0`) | SDK available on dev machine; patterns unchanged |
 | `TaskStatus` enum | `KanbanStatus` | Name clash with `System.Threading.Tasks.TaskStatus` |
 | SQLite file `tasks.db` | `bla.db` under `Auth.Api` | Shared DB path chosen during implementation |
 | Identity + JWT (both registered) | JWT as default authenticate/challenge scheme | AI scaffold left Identity cookie as default → 401 on protected routes |
