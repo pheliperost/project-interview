@@ -1,4 +1,4 @@
-# Agent handoff — BLA Interview / Simple Tasks
+# Agent handoff — Technical Interview / Simple Tasks
 
 > **Purpose:** Give a new Cursor agent full operational context so it can continue this project without re-discovering decisions from scratch.
 >
@@ -36,7 +36,7 @@ npm run dev
 | Tasks Swagger | http://localhost:5099/swagger |
 | App | http://localhost:5173 |
 
-**Demo login:** `demo@bla.local` / `Demo123!` → should show **8 seeded tasks**.
+**Demo login:** `demo@example.local` / `Demo123!` → should show **8 seeded tasks**.
 
 ---
 
@@ -46,7 +46,7 @@ npm run dev
 |---|---|
 | **Repo** | Project Interview (Simple Tasks) |
 | **App name** | Simple Tasks |
-| **Goal** | BLA .NET technical interview — personal Kanban board |
+| **Goal** | .NET technical interview — personal Kanban board |
 | **Status** | Implementation + polish **complete** (2026-07-04) |
 
 **Product narrative:** Secure personal Kanban for one user's tasks (priorities, due dates, drag-and-drop, done/canceled terminal columns, reactivate, search/filters). Tasks are never shared between users.
@@ -82,7 +82,7 @@ npm run dev
 - Machine has .NET 10 SDK only — targets `net10.0`, not net8. Patterns match exercise intent.
 - **PowerShell:** chain commands with `;`, not `&&`.
 
-**Last verified:** `dotnet test` (**79 pass** — 42 unit + 37 integration), `client/` `npm run build` (pass).
+**Last verified:** `dotnet test` (**105 pass** — 60 unit + 45 integration), `client/` `npm run build` (pass).
 
 ---
 
@@ -91,7 +91,7 @@ npm run dev
 ```
 src/
   BlaInterview.Domain/          # TaskItem, KanbanStatus, TaskPriority — no EF/Identity
-  BlaInterview.Application/     # TaskService, validators, DTOs, TaskMapper
+  BlaInterview.Application/     # TaskService, validators, DTOs, AutoMapper profiles
   BlaInterview.Infrastructure/  # EF, Identity, JWT, TaskRepository, seeders
   BlaInterview.Api.Shared/      # Shared HTTP middleware, Swagger, CORS helpers
   BlaInterview.Auth.Api/        # Auth + health endpoints (port 5098)
@@ -113,7 +113,7 @@ AGENT-HANDOFF.md
 1. **Clean Architecture** — business logic in Application; thin controllers; no validation in controllers.
 2. **Two segregated APIs** — `Auth.Api` (identity + JWT issuance) and `Tasks.Api` (CRUD); shared JWT config via `JwtAuthenticationExtensions`.
 2. **`KanbanStatus` enum** (NOT `TaskStatus`) — avoids clash with `System.Threading.Tasks.TaskStatus`.
-3. **Manual `TaskMapper`** — AutoMapper removed/unused.
+3. **AutoMapper `TaskProfile`** — entity/DTO mapping via profiles; pagination constants in `TaskPagination`.
 4. **JWT in localStorage** — demo tradeoff documented in README (not HttpOnly cookies).
 5. **Logout** — instant, no confirmation modal; clears localStorage + redirects to login.
 6. **Terminal columns** — `Completed` / `Cancelled`: drag in only; reopen via `POST /api/tasks/{id}/reactivate` → moves to `Todo`.
@@ -132,7 +132,9 @@ Segregated into **two assemblies** — unit vs integration — with shared colle
 | Folder | Purpose |
 |--------|---------|
 | `Domain/` | Pure entity tests (`TaskItemTests`) |
-| `Application/` | `TaskServiceTests`, `ValidatorTests`, `NotificationTests`, `TaskMapperTests` |
+| `Application/` | `TaskServiceTests`, `ValidatorTests`, `NotificationTests`, `TaskProfileTests` |
+| `Infrastructure/` | `AuthServiceTests`, `JwtTokenServiceTests` |
+| `Api/` | `AppExceptionHandlerTests` |
 | `Fixtures/` | `TaskServiceFixtures` + `DomainFixtures` (Bogus valid/invalid builders) |
 | `Data/` | `MemberData` providers (`TaskItemTerminalData`, `KanbanStatusTransitionData`) |
 
@@ -175,7 +177,7 @@ Filter integration tests by trait, e.g. `dotnet test --filter "Category=Task Ser
 | DELETE | `/api/tasks/{id}` | |
 | POST | `/api/tasks/{id}/reactivate` | |
 
-Swagger JWT Authorize: `src/BlaInterview.Api/Swagger/SwaggerExtensions.cs`.
+Swagger JWT Authorize: `src/BlaInterview.Api.Shared/Swagger/SwaggerExtensions.cs`.
 
 ---
 
@@ -198,14 +200,14 @@ Frontend: `client/src/api/types.ts` (`COLUMNS`, `ALL_STATUSES`).
 
 | Email | Password | Tasks |
 |-------|----------|-------|
-| `demo@bla.local` | `Demo123!` | **8 tasks** across all columns |
-| `other@bla.local` | `Other123!` | **4 tasks** (403 demo; titles prefixed `[Other]`) |
+| `demo@example.local` | `Demo123!` | **8 tasks** across all columns |
+| `other@example.local` | `Other123!` | **4 tasks** (403 demo; titles prefixed `[Other]`) |
 
 **Seeding behavior:**
 - Runs at API startup in **Development** only (`Program.cs` → `DatabaseSeeder.SeedAsync`).
 - **Per-user:** seeds when that user has zero tasks (not a global "skip if any task exists").
 - **New registrations** → empty board.
-- DB file: `src/BlaInterview.Auth.Api/bla.db` — delete + restart Auth API (then Tasks API) to force re-seed if demo board is stale.
+- DB file: `src/BlaInterview.Auth.Api/tasks.db` — delete + restart Auth API (then Tasks API) to force re-seed if demo board is stale.
 
 **Demo task titles:** Plan sprint backlog, Refine API integration (Todo); Model training pipeline, Data node mapping (In Progress); Waiting on design assets (On Hold); Visual flow schema (In Review); Ship release notes (Completed); Deprecated feature cleanup (Cancelled).
 
@@ -220,6 +222,7 @@ Login page pre-fills demo credentials (`client/src/pages/LoginPage.tsx`).
 | JWT 401 on protected routes (Identity cookie overrode Bearer) | `Infrastructure/DependencyInjection.cs` — default authenticate/challenge = JWT Bearer |
 | Seed cards invisible (API numeric enums vs frontend string keys) | `Program.cs` — `JsonStringEnumConverter`; `client/src/api/client.ts` — `normalizeTask()` |
 | SQLite `ORDER BY DateTimeOffset` unsupported | `TaskRepository` — sort in memory |
+| SQLite `WHERE DateTimeOffset` unsupported | `TaskRepository` — date-range filters in memory |
 | Integration test token JSON casing | Tests — case-insensitive deserialization |
 | Swagger OpenAPI types | `SwaggerExtensions.cs` — `Microsoft.OpenApi` namespace |
 

@@ -1,5 +1,7 @@
+using AutoMapper;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Application.Interfaces;
+using BlaInterview.Application.Mapping.Profiles;
 using BlaInterview.Application.Services;
 using BlaInterview.Application.Validators;
 using BlaInterview.Domain.Entities;
@@ -23,6 +25,7 @@ public class TaskServiceFixtures : IDisposable
     public TaskService GetService()
     {
         Mocker = new AutoMocker();
+        Mocker.Use<IMapper>(new MapperConfiguration(cfg => cfg.AddProfile<TaskProfile>()).CreateMapper());
         Mocker.Use<IValidator<CreateTaskRequest>>(new CreateTaskRequestValidator());
         Mocker.Use<IValidator<UpdateTaskRequest>>(new UpdateTaskRequestValidator());
         Mocker.Use<IValidator<TaskFilterRequest>>(new TaskFilterRequestValidator());

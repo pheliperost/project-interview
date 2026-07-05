@@ -164,4 +164,54 @@ public class TaskRepositoryTests
         // Assert
         Assert.Equal(2, page.TotalCount);
     }
+
+    [Fact(DisplayName = "Filtering by created date range should return only matching items.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByUserAsync_FilterByCreatedRange_ShouldReturnMatchingOnly()
+    {
+        // Arrange
+        await _fixtures.SeedDateRangeTasksAsync();
+        var from = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var to = new DateTimeOffset(2026, 1, 15, 0, 0, 0, TimeSpan.Zero);
+        var query = new TaskQuery(null, null, from, to, null, null, 1, 100);
+
+        // Act
+        var page = await _fixtures.Repository.GetByUserAsync("user1", query);
+
+        // Assert
+        Assert.Equal(2, page.TotalCount);
+        Assert.All(page.Items, t => Assert.True(t.CreatedAt >= from && t.CreatedAt <= to));
+    }
+
+    [Fact(DisplayName = "Filtering by updated date range should return only matching items.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByUserAsync_FilterByUpdatedRange_ShouldReturnMatchingOnly()
+    {
+        // Arrange
+        await _fixtures.SeedDateRangeTasksAsync();
+        var from = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var to = new DateTimeOffset(2026, 1, 31, 0, 0, 0, TimeSpan.Zero);
+        var query = new TaskQuery(null, null, null, null, from, to, 1, 100);
+
+        // Act
+        var page = await _fixtures.Repository.GetByUserAsync("user1", query);
+
+        // Assert
+        Assert.Equal(2, page.TotalCount);
+        Assert.All(page.Items, t => Assert.True(t.UpdatedAt >= from && t.UpdatedAt <= to));
+    }
+
+    [Fact(DisplayName = "GetByIdAsync with missing id should return null.")]
+    [Trait("Category", "Task Repository")]
+    public async Task TaskRepository_GetByIdAsync_MissingId_ShouldReturnNull()
+    {
+        // Arrange
+        await _fixtures.SeedDefaultTasksAsync();
+
+        // Act
+        var task = await _fixtures.Repository.GetByIdAsync(Guid.NewGuid());
+
+        // Assert
+        Assert.Null(task);
+    }
 }

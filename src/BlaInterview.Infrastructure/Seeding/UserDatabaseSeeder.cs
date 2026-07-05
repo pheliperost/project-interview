@@ -9,9 +9,9 @@ namespace BlaInterview.Infrastructure.Seeding;
 
 public static class UserDatabaseSeeder
 {
-    public const string DemoEmail = "demo@bla.local";
+    public const string DemoEmail = "demo@example.local";
     public const string DemoPassword = "Demo123!";
-    public const string OtherEmail = "other@bla.local";
+    public const string OtherEmail = "other@example.local";
     public const string OtherPassword = "Other123!";
 
     public static async Task SeedAsync(IServiceProvider services)

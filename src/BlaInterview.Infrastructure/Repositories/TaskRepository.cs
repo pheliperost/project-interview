@@ -28,21 +28,23 @@ public class TaskRepository : ITaskRepository
         if (query.Statuses is { Count: > 0 })
             dbQuery = dbQuery.Where(t => query.Statuses.Contains(t.Status));
 
-        if (query.CreatedFrom.HasValue)
-            dbQuery = dbQuery.Where(t => t.CreatedAt >= query.CreatedFrom.Value);
-
-        if (query.CreatedTo.HasValue)
-            dbQuery = dbQuery.Where(t => t.CreatedAt <= query.CreatedTo.Value);
-
-        if (query.UpdatedFrom.HasValue)
-            dbQuery = dbQuery.Where(t => t.UpdatedAt >= query.UpdatedFrom.Value);
-
-        if (query.UpdatedTo.HasValue)
-            dbQuery = dbQuery.Where(t => t.UpdatedAt <= query.UpdatedTo.Value);
-
         var tasks = await dbQuery.ToListAsync(cancellationToken);
 
-        var sorted = tasks
+        IEnumerable<TaskItem> filtered = tasks;
+
+        if (query.CreatedFrom.HasValue)
+            filtered = filtered.Where(t => t.CreatedAt >= query.CreatedFrom.Value);
+
+        if (query.CreatedTo.HasValue)
+            filtered = filtered.Where(t => t.CreatedAt <= query.CreatedTo.Value);
+
+        if (query.UpdatedFrom.HasValue)
+            filtered = filtered.Where(t => t.UpdatedAt >= query.UpdatedFrom.Value);
+
+        if (query.UpdatedTo.HasValue)
+            filtered = filtered.Where(t => t.UpdatedAt <= query.UpdatedTo.Value);
+
+        var sorted = filtered
             .OrderBy(t => t.DueDate ?? DateTimeOffset.MaxValue)
             .ThenBy(t => t.Title)
             .ToList();

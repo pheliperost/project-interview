@@ -1,6 +1,6 @@
 # Interview demo walkthrough — Simple Tasks
 
-A 5–10 minute script for presenting the BLA technical interview project.
+A 5–10 minute script for presenting the technical interview project.
 
 ---
 
@@ -32,7 +32,7 @@ Optional for API discussion:
 | Auth | http://localhost:5098/swagger |
 | Tasks | http://localhost:5099/swagger |
 
-Demo login is pre-filled: **demo@bla.local** / **Demo123!**
+Demo login is pre-filled: **demo@example.local** / **Demo123!**
 
 ---
 
@@ -123,10 +123,12 @@ Highlights to mention:
 | PDF asks | Where in repo |
 |----------|----------------|
 | Prompt used to scaffold | [genai-scaffold-prompt.md](genai-scaffold-prompt.md) |
+| Prompt vs as-built delta | [genai-prompt-vs-result.md](genai-prompt-vs-result.md) |
+| Sample output code | [README.md](../README.md) — GenAI workflow section |
 | How AI output was validated | `AI-NOTES.md` — build/test, gap review, manual fixes |
 | Corrections / edge cases | JWT scheme fix, `KanbanStatus` rename, enum JSON, per-user seeding, two-API split |
 
-Example narrative: *“I aligned scope in Phase 1 before coding, used GenAI to scaffold Clean Architecture, then verified with `dotnet test` and fixed issues the AI missed (Identity vs Bearer, SQLite sorting, seed visibility).”*
+Example narrative: *“I aligned scope in Phase 1 before coding, used GenAI to scaffold Clean Architecture, then verified with `dotnet test` and fixed issues the AI missed (Identity vs Bearer, SQLite sorting, seed visibility). The prompt targeted a single API; I split auth and tasks to match the exercise and fixed three AI gaps found in testing.”*
 
 ---
 
@@ -149,6 +151,6 @@ cd client; npm run build
 
 Demo user should always see **8 cards**. If not:
 
-1. Sign in as **demo@bla.local** / **Demo123!** (not a newly registered user).
+1. Sign in as **demo@example.local** / **Demo123!** (not a newly registered user).
 2. Start **Auth API first**, then Tasks API, then client.
-3. Delete `src/BlaInterview.Auth.Api/bla.db` and restart both APIs.
+3. Delete `src/BlaInterview.Auth.Api/tasks.db` and restart both APIs.

@@ -33,7 +33,7 @@ public class IntegrationTestsFixture : IDisposable
 
     public IntegrationTestsFixture()
     {
-        var databasePath = Path.Combine(Path.GetTempPath(), $"bla-interview-tests-{Guid.NewGuid():N}.db");
+        var databasePath = Path.Combine(Path.GetTempPath(), $"simple-tasks-tests-{Guid.NewGuid():N}.db");
         AuthFactory = new AuthAppFactory(databasePath);
         TasksFactory = new TasksAppFactory(databasePath);
 

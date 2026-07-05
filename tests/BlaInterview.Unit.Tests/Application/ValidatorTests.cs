@@ -68,7 +68,7 @@ public class ValidatorTests
     public void FilterValidator_PageSizeAboveMax_ShouldBeInvalid()
     {
         var result = _filterValidator.Validate(new TaskFilterRequest(
-            null, null, null, null, null, null, null, TaskMapper.MaxPageSize + 1));
+            null, null, null, null, null, null, null, TaskPagination.MaxPageSize + 1));
         Assert.False(result.IsValid);
     }
 
@@ -76,8 +76,16 @@ public class ValidatorTests
     [Trait("Category", "Validators")]
     public void RegisterValidator_ShortPassword_ShouldBeInvalid()
     {
-        var result = _registerValidator.Validate(new RegisterRequest("user@bla.local", "short"));
+        var result = _registerValidator.Validate(new RegisterRequest("user@example.local", "short"));
         Assert.False(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Register validator should accept valid credentials.")]
+    [Trait("Category", "Validators")]
+    public void RegisterValidator_ValidRequest_ShouldBeValid()
+    {
+        var result = _registerValidator.Validate(new RegisterRequest("user@example.local", "Test1234!"));
+        Assert.True(result.IsValid);
     }
 
     [Fact(DisplayName = "Login validator should reject invalid email.")]
@@ -86,5 +94,13 @@ public class ValidatorTests
     {
         var result = _loginValidator.Validate(new LoginRequest("not-an-email", "Demo123!"));
         Assert.False(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Login validator should accept valid credentials.")]
+    [Trait("Category", "Validators")]
+    public void LoginValidator_ValidRequest_ShouldBeValid()
+    {
+        var result = _loginValidator.Validate(new LoginRequest("user@example.local", "Demo123!"));
+        Assert.True(result.IsValid);
     }
 }

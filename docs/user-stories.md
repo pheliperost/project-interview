@@ -1,4 +1,4 @@
-# User Stories — BLA Interview (v1)
+# User Stories — Technical Interview (v1)
 
 **App name:** Simple Tasks  
 **UI:** React 19 + Vite + TypeScript + **shadcn/ui** + TanStack Query
@@ -149,8 +149,8 @@ As a professional managing my own work, I want a secure personal Kanban board wh
 
 | User | Credentials | Scenario |
 |------|-------------|----------|
-| Primary | `demo@bla.local` / `Demo123!` | Full board — tasks in all columns, mixed priorities/dates; use for happy-path demo, drag, search/filter |
-| Secondary | `other@bla.local` / `Other123!` | Smaller distinct board; use to demo **403** when accessing another user's task by ID |
+| Primary | `demo@example.local` / `Demo123!` | Full board — tasks in all columns, mixed priorities/dates; use for happy-path demo, drag, search/filter |
+| Secondary | `other@example.local` / `Other123!` | Smaller distinct board; use to demo **403** when accessing another user's task by ID |
 
 ---
 

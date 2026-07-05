@@ -59,6 +59,6 @@ public class TaskFilterRequestValidator : AbstractValidator<TaskFilterRequest>
             .Must(f => f.UpdatedFrom == null || f.UpdatedTo == null || f.UpdatedFrom <= f.UpdatedTo)
             .WithMessage("Updated date range is invalid.");
         RuleFor(x => x.Page).GreaterThan(0).When(x => x.Page.HasValue);
-        RuleFor(x => x.PageSize).InclusiveBetween(1, TaskMapper.MaxPageSize).When(x => x.PageSize.HasValue);
+        RuleFor(x => x.PageSize).InclusiveBetween(1, TaskPagination.MaxPageSize).When(x => x.PageSize.HasValue);
     }
 }

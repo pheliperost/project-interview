@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('demo@bla.local');
+  const [email, setEmail] = useState('demo@example.local');
   const [password, setPassword] = useState('Demo123!');
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +36,7 @@ export function LoginPage() {
           <p className="text-primary text-sm font-semibold tracking-wide">Simple Tasks</p>
           <h1 className="mt-1 text-2xl font-bold">Sign in</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Use demo@bla.local to see seeded tasks
+            Use demo@example.local to see seeded tasks
           </p>
         </div>
         <div className="space-y-2">

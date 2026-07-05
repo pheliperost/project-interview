@@ -1,4 +1,4 @@
-# Simple Tasks — BLA Technical Interview
+# Simple Tasks — Technical Interview
 
 Personal Kanban task board built with **Clean Architecture** (.NET) and **React 19**.
 
@@ -61,7 +61,7 @@ dotnet run
 | Auth | http://localhost:5098 | http://localhost:5098/swagger |
 | Tasks | http://localhost:5099 | http://localhost:5099/swagger |
 
-- SQLite DB: `src/BlaInterview.Auth.Api/bla.db` (shared by both APIs)
+- SQLite DB: `src/BlaInterview.Auth.Api/tasks.db` (shared by both APIs)
 
 ## Run the frontend
 
@@ -77,8 +77,8 @@ npm run dev
 
 | User | Email | Password | Purpose |
 |------|-------|----------|---------|
-| Primary | `demo@bla.local` | `Demo123!` | **8 seeded tasks** across all columns |
-| Secondary | `other@bla.local` | `Other123!` | 4 tasks + 403 ownership demo |
+| Primary | `demo@example.local` | `Demo123!` | **8 seeded tasks** across all columns |
+| Secondary | `other@example.local` | `Other123!` | 4 tasks + 403 ownership demo |
 
 ### Seeded tasks (demo user only)
 
@@ -86,9 +86,9 @@ On first API start in **Development**, the database is migrated and seeded. The 
 
 **If you don't see cards:**
 
-1. Sign in as **`demo@bla.local`** / **`Demo123!`** (login form is pre-filled). Registering a new account will not show seed data.
+1. Sign in as **`demo@example.local`** / **`Demo123!`** (login form is pre-filled). Registering a new account will not show seed data.
 2. Restart the API after pulling changes (seeding runs at startup).
-3. If you previously logged in as demo with an empty DB, delete `src/BlaInterview.Auth.Api/bla.db` and restart both APIs — seed runs per user when that user has zero tasks.
+3. If you previously logged in as demo with an empty DB, delete `src/BlaInterview.Auth.Api/tasks.db` and restart both APIs — seed runs per user when that user has zero tasks.
 
 You can confirm seed data in Swagger: `POST /api/auth/login` → Authorize with the token → `GET /api/tasks` should return 8 items with `"status": "Todo"` (string enums, not numbers).
 
@@ -96,8 +96,8 @@ You can confirm seed data in Swagger: `POST /api/auth/login` → Authorize with 
 
 Automated in `TaskOwnershipTests` (demo token → other user's task → 403). Manual check:
 
-1. Log in as `demo@bla.local`
-2. Log in as `other@bla.local` in Swagger, `GET /api/tasks`, copy a task ID
+1. Log in as `demo@example.local`
+2. Log in as `other@example.local` in Swagger, `GET /api/tasks`, copy a task ID
 3. With demo token, `GET /api/tasks/{id}` → **403 Forbidden**
 
 ## Tests
@@ -106,11 +106,11 @@ Automated in `TaskOwnershipTests` (demo token → other user's task → 403). Ma
 dotnet test
 ```
 
-**Last verified:** **79 pass** — 42 unit + 37 integration.
+**Last verified:** **105 pass** — 60 unit + 45 integration.
 
 | Assembly | Focus |
 |----------|--------|
-| `BlaInterview.Unit.Tests` | Domain, `TaskService`, validators, notifications, mapper (Moq.AutoMock + Bogus) |
+| `BlaInterview.Unit.Tests` | Domain, `TaskService`, validators, notifications, mapper, **AuthService**, **JwtTokenService**, **AppExceptionHandler** (Moq.AutoMock + Bogus) |
 | `BlaInterview.Integration.Tests` | Dual-host WAF (`AuthAppFactory` + `TasksAppFactory`, shared SQLite), repository (in-memory SQLite) |
 
 ### Integration API tests (by host)
@@ -147,32 +147,80 @@ For interview/demo purposes, JWT is stored in `localStorage`. In production, pre
 src/           # Domain, Application, Infrastructure, Api.Shared, Auth.Api, Tasks.Api
 tests/         # BlaInterview.Unit.Tests + BlaInterview.Integration.Tests
 client/        # React frontend
-docs/          # genai-scaffold-prompt.md, user-stories.md
+docs/          # genai-scaffold-prompt.md, genai-prompt-vs-result.md, user-stories.md
 ```
 
 ## GenAI workflow
 
-This project was scaffolded and implemented with AI assistance (Cursor). Below is the workflow expected by the BLA exercise.
+This project was scaffolded and implemented with AI assistance (Cursor). Below is the workflow expected by the technical interview exercise.
 
 ### Prompt used
 
 The full agreed specification lives in [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md). Phase 1 aligned scope (user story, S1–S7, stack, API contract, seed users) before any code was written.
 
+**Prompt vs as-built:** The prompt targeted a single API host and AutoMapper. The final solution split Auth and Tasks APIs and used a manual mapper. See [docs/genai-prompt-vs-result.md](docs/genai-prompt-vs-result.md) for the full delta and reasons.
+
 ### Sample output
 
 AI produced: Clean Architecture solution layout, Domain/Application/Infrastructure/Api layers, Identity + JWT auth, FluentValidation, EF Core + SQLite migrations, xUnit tests, and a React 19 + Vite client with Kanban drag-and-drop, filters, and shadcn/ui components.
 
+**Representative scaffold (thin controller → service):**
+
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class TasksController : BaseController
+{
+    private readonly ITaskService _taskService;
+
+    [HttpPost]
+    public async Task<ActionResult<TaskResponse>> CreateTask(
+        CreateTaskRequest request, CancellationToken cancellationToken)
+    {
+        var task = await _taskService.CreateTaskAsync(UserId, request, cancellationToken);
+        if (!ValidOperation())
+            return NotificationError();
+
+        return CreatedAtAction(nameof(GetTask), new { id = task!.Id }, task);
+    }
+}
+```
+
+Business rules, validation, and ownership checks live in `TaskService` — not in the controller.
+
 ### Validation performed
 
-- `dotnet build` and `dotnet test` (**79 pass** — 42 unit + 37 integration, dual-host WAF)
+- `dotnet build` and `dotnet test` (**105 pass** — 60 unit + 45 integration, dual-host WAF)
 - Manual smoke: login, CRUD, drag between columns, reactivate from Done/Canceled, filters, 403 on other user's task
 - Frontend `npm run build`
 
 ### Corrections applied (examples)
 
-1. **JWT 401** — Identity cookie scheme overrode Bearer; set default authenticate/challenge to JWT.
-2. **Enum JSON** — API returned numeric enums; frontend expected strings → added `JsonStringEnumConverter` + client-side normalization.
-3. **SQLite sorting** — `ORDER BY` on `DateTimeOffset` unsupported → sort in memory in repository.
+AI output needed fixes after testing. Two representative examples:
+
+**1. JWT 401 — Identity cookie overrode Bearer**
+
+```csharp
+services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(/* ... */);
+```
+
+**2. Enum JSON — API returned `0`–`5`, frontend expected `"Todo"`, etc.**
+
+```csharp
+services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+```
+
+Other fixes: SQLite `DateTimeOffset` sort in memory; `TaskStatus` renamed to `KanbanStatus`; single API split into Auth + Tasks hosts.
 
 ### Edge cases captured
 
@@ -181,4 +229,4 @@ AI produced: Clean Architecture solution layout, Domain/Application/Infrastructu
 - Filters hide non-matching cards but drag-and-drop still allowed while filtered.
 - JWT in localStorage documented as demo tradeoff (XSS vs simplicity).
 
-Session log: [AI-NOTES.md](AI-NOTES.md). For project continuity when resuming development, see [AGENT-HANDOFF.md](AGENT-HANDOFF.md).
+Session log: [AI-NOTES.md](AI-NOTES.md). Interview talking points: [docs/interview-walkthrough.md](docs/interview-walkthrough.md). For project continuity when resuming development, see [AGENT-HANDOFF.md](AGENT-HANDOFF.md).

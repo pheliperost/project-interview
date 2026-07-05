@@ -88,6 +88,23 @@ public class TaskRepositoryFixtures : IDisposable
         await Context.SaveChangesAsync();
     }
 
+    public async Task SeedDateRangeTasksAsync()
+    {
+        Context.Tasks.RemoveRange(Context.Tasks);
+        await Context.SaveChangesAsync();
+
+        var jan1 = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var jan10 = new DateTimeOffset(2026, 1, 10, 0, 0, 0, TimeSpan.Zero);
+        var jan20 = new DateTimeOffset(2026, 1, 20, 0, 0, 0, TimeSpan.Zero);
+        var feb1 = new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero);
+
+        Context.Tasks.AddRange(
+            GenerateTask("user1", "January task", KanbanStatus.Todo, jan1, jan10),
+            GenerateTask("user1", "February task", KanbanStatus.Todo, feb1, feb1),
+            GenerateTask("user1", "Updated in January", KanbanStatus.Todo, jan1, jan20));
+        await Context.SaveChangesAsync();
+    }
+
     public void Dispose()
     {
         Context.Dispose();

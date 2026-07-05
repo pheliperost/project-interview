@@ -181,6 +181,49 @@ public class TaskCrudTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact(DisplayName = "Creating a task with past due date should return 400.")]
+    [Trait("Category", "Integration Web - Tasks")]
+    public async Task Task_Create_PastDueDate_ShouldReturn400()
+    {
+        // Arrange
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
+        var body = new CreateTaskRequest(
+            "Past due task",
+            null,
+            TaskPriority.Medium,
+            DateTimeOffset.UtcNow.AddDays(-1));
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/tasks", body);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "Reactivating a cancelled task should return To Do.")]
+    [Trait("Category", "Integration Web - Tasks")]
+    public async Task Task_Reactivate_CancelledTask_ShouldReturnTodo()
+    {
+        // Arrange
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
+        var created = await _fixture.CreateDemoTaskAsync();
+        var cancelBody = new UpdateTaskRequest(
+            created.Title,
+            created.Description,
+            KanbanStatus.Cancelled,
+            created.Priority,
+            created.DueDate);
+        await client.PutAsJsonAsync($"/api/tasks/{created.Id}", cancelBody);
+
+        // Act
+        var response = await client.PostAsync($"/api/tasks/{created.Id}/reactivate", null);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(JsonOptions);
+        Assert.Equal(KanbanStatus.Todo, task?.Status);
+    }
+
     private static async Task AssertErrorContainsAsync(HttpResponseMessage response, string fragment)
     {
         var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(JsonOptions);

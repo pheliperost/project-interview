@@ -1,4 +1,4 @@
-# BLA Interview — Agreed Scaffold Prompt
+# Technical Interview — Agreed Scaffold Prompt
 
 > Saved during Phase 1 alignment. Use this prompt to generate the API scaffold and full implementation.
 > **Do not use external identity providers (Clerk, Auth0, etc.).**
@@ -27,7 +27,6 @@ See `docs/user-stories.md` for scoped stories (S1–S7) and acceptance criteria.
 | Frontend | React 19, Vite, TypeScript, **shadcn/ui**, Tailwind CSS, TanStack Query |
 | Drag-and-drop | `@dnd-kit/core` |
 
-**Project path:** `d:\dev proj\BLA_interview`  
 **App name:** **Simple Tasks** (sidebar header / browser title)
 
 ---
@@ -35,7 +34,7 @@ See `docs/user-stories.md` for scoped stories (S1–S7) and acceptance criteria.
 ## Solution structure
 
 ```
-BLA_interview/
+simple-tasks/
   src/
     BlaInterview.Domain/           # Entities, enums — no EF, no Identity
     BlaInterview.Application/      # DTOs, interfaces, services, validators, AutoMapper profiles
@@ -355,7 +354,7 @@ Write tests for **Application**, **Infrastructure**, and **API** layers. TDD pre
 | API URL | `https://localhost:7xxx` (document in README) |
 | Vite dev | `http://localhost:5173` |
 | CORS | Allow Vite origin with credentials headers as needed |
-| SQLite file | `src/BlaInterview.Api/bla.db` |
+| SQLite file | `src/BlaInterview.Auth.Api/tasks.db` |
 | Migrations + seed | Auto on API startup in **Development** |
 | DELETE response | **204 No Content** |
 
@@ -429,7 +428,7 @@ Optional: `POST /api/auth/logout` returns **204** as a no-op (stateless JWT — 
 
 Two users with **distinct demo scenarios** — credentials documented in README.
 
-### User 1 — `demo@bla.local` / `Demo123!` (primary demo)
+### User 1 — `demo@example.local` / `Demo123!` (primary demo)
 
 **Scenario:** Active professional with a full workflow board.
 
@@ -439,7 +438,7 @@ Two users with **distinct demo scenarios** — credentials documented in README.
 - At least one task per column for Kanban + drag demo
 - Good dataset for **search/filter** demo (varied titles)
 
-### User 2 — `other@bla.local` / `Other123!` (ownership / 403 demo)
+### User 2 — `other@example.local` / `Other123!` (ownership / 403 demo)
 
 **Scenario:** Second user with a smaller, distinct board.
 

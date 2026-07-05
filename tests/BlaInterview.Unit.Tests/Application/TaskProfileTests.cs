@@ -1,32 +1,41 @@
+using AutoMapper;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Application.Mapping;
+using BlaInterview.Application.Mapping.Profiles;
+using BlaInterview.Application.Queries;
 using BlaInterview.Domain.Entities;
 using BlaInterview.Domain.Enums;
 using BlaInterview.Unit.Tests.Fixtures;
 
 namespace BlaInterview.Unit.Tests.Application;
 
-public class TaskMapperTests
+public class TaskProfileTests
 {
-    [Fact(DisplayName = "ToQuery should trim search and cap page size.")]
+    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<TaskProfile>()).CreateMapper();
+
+    [Fact(DisplayName = "TaskFilterRequest should trim search and cap page size.")]
     [Trait("Category", "Task Mapper")]
-    public void TaskMapper_ToQuery_ShouldMapFilterFields()
+    public void TaskProfile_ToQuery_ShouldMapFilterFields()
     {
         var filter = new TaskFilterRequest("  API  ", [KanbanStatus.Todo], null, null, null, null, 2, 500);
-        var query = TaskMapper.ToQuery(filter);
+        var query = _mapper.Map<TaskQuery>(filter);
 
         Assert.Equal("API", query.SearchTerm);
         Assert.Single(query.Statuses!);
         Assert.Equal(2, query.Page);
-        Assert.Equal(TaskMapper.MaxPageSize, query.PageSize);
+        Assert.Equal(TaskPagination.MaxPageSize, query.PageSize);
     }
 
-    [Fact(DisplayName = "ToListResponse should map pagination metadata.")]
+    [Fact(DisplayName = "TaskItem list should map pagination metadata.")]
     [Trait("Category", "Task Mapper")]
-    public void TaskMapper_ToListResponse_ShouldMapPagination()
+    public void TaskProfile_ToListResponse_ShouldMapPagination()
     {
         var task = DomainFixtures.GenerateValidTaskItem("user1", KanbanStatus.Todo);
-        var response = TaskMapper.ToListResponse([task], 10, 2, 5);
+        var response = new TaskListResponse(
+            [_mapper.Map<TaskResponse>(task)],
+            10,
+            2,
+            5);
 
         Assert.Equal(10, response.TotalCount);
         Assert.Equal(2, response.Page);
@@ -34,13 +43,17 @@ public class TaskMapperTests
         Assert.Single(response.Items);
     }
 
-    [Fact(DisplayName = "CreateEntity should default status to Todo.")]
+    [Fact(DisplayName = "CreateTaskRequest should default status to Todo.")]
     [Trait("Category", "Task Mapper")]
-    public void TaskMapper_CreateEntity_ShouldDefaultTodo()
+    public void TaskProfile_CreateEntity_ShouldDefaultTodo()
     {
         var now = DateTimeOffset.UtcNow;
         var request = new CreateTaskRequest("New task", "Desc", null, null);
-        var entity = TaskMapper.CreateEntity("user1", request, now);
+        var entity = _mapper.Map<TaskItem>(request, opt =>
+        {
+            opt.Items[TaskProfile.UserIdContextKey] = "user1";
+            opt.Items[TaskProfile.NowContextKey] = now;
+        });
 
         Assert.Equal(KanbanStatus.Todo, entity.Status);
         Assert.Equal(TaskPriority.Medium, entity.Priority);
@@ -48,12 +61,12 @@ public class TaskMapperTests
         Assert.Equal(now, entity.CreatedAt);
     }
 
-    [Fact(DisplayName = "ToResponse should map all task fields.")]
+    [Fact(DisplayName = "TaskItem should map all task fields.")]
     [Trait("Category", "Task Mapper")]
-    public void TaskMapper_ToResponse_ShouldMapFields()
+    public void TaskProfile_ToResponse_ShouldMapFields()
     {
         var task = DomainFixtures.GenerateValidTaskItem("user1", KanbanStatus.InProgress);
-        var response = TaskMapper.ToResponse(task);
+        var response = _mapper.Map<TaskResponse>(task);
 
         Assert.Equal(task.Id, response.Id);
         Assert.Equal(task.Title, response.Title);

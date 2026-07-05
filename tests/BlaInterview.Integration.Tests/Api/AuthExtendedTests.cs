@@ -25,7 +25,7 @@ public class AuthExtendedTests
     {
         // Arrange
         var client = _fixture.AuthFactory.CreateClient();
-        var email = $"test-{Guid.NewGuid():N}@bla.local";
+        var email = $"test-{Guid.NewGuid():N}@example.local";
 
         // Act
         var response = await client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, "Test1234!"));
@@ -78,7 +78,7 @@ public class AuthExtendedTests
         // Act
         var response = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest($"weak-{Guid.NewGuid():N}@bla.local", "short"));
+            new RegisterRequest($"weak-{Guid.NewGuid():N}@example.local", "short"));
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -94,7 +94,7 @@ public class AuthExtendedTests
         // Act
         var response = await client.PostAsJsonAsync(
             "/api/auth/login",
-            new LoginRequest("unknown@bla.local", "Demo123!"));
+            new LoginRequest("unknown@example.local", "Demo123!"));
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -112,6 +112,36 @@ public class AuthExtendedTests
 
         // Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "Logging out without a token should return 401.")]
+    [Trait("Category", "Integration Web - Auth")]
+    public async Task Auth_Logout_WithoutToken_ShouldReturn401()
+    {
+        // Arrange
+        var client = _fixture.AuthFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsync("/api/auth/logout", null);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "Registering with invalid email should return 400.")]
+    [Trait("Category", "Integration Web - Auth")]
+    public async Task Auth_Register_InvalidEmail_ShouldReturn400()
+    {
+        // Arrange
+        var client = _fixture.AuthFactory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequest("not-an-email", "Test1234!"));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact(DisplayName = "Health endpoint should return healthy.")]

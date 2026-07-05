@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using BlaInterview.Application.DTOs;
+using BlaInterview.Domain.Enums;
 using BlaInterview.Integration.Tests.Config;
 
 namespace BlaInterview.Integration.Tests.Api;
@@ -26,6 +27,21 @@ public class AuthTests
 
         // Act
         var response = await client.GetAsync("/api/tasks");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "Creating a task without a token should return 401.")]
+    [Trait("Category", "Integration Web - Auth")]
+    public async Task Auth_CreateTask_WithoutToken_ShouldReturn401()
+    {
+        // Arrange
+        var client = _fixture.TasksFactory.CreateClient();
+        var body = new CreateTaskRequest("Unauthorized task", null, TaskPriority.Medium, null);
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/tasks", body);
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

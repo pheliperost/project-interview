@@ -1,4 +1,5 @@
 using BlaInterview.Application.Interfaces;
+using BlaInterview.Application.Mapping.Profiles;
 using BlaInterview.Application.Notifications;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ public static class DependencyInjection
 
     public static IServiceCollection AddTasksApplication(this IServiceCollection services)
     {
+        services.AddAutoMapper(typeof(TaskProfile).Assembly);
         services.AddValidatorsFromAssemblyContaining<Validators.CreateTaskRequestValidator>();
         services.AddScoped<INotifyer, Notifyer>();
         services.AddScoped<ITaskService, Services.TaskService>();
