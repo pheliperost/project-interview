@@ -45,13 +45,13 @@ public class ValidatorTests
         Assert.False(result.IsValid);
     }
 
-    [Fact(DisplayName = "Update task validator should reject past due date.")]
+    [Fact(DisplayName = "Update task validator should accept past due date in payload.")]
     [Trait("Category", "Validators")]
-    public void UpdateTaskValidator_PastDueDate_ShouldBeInvalid()
+    public void UpdateTaskValidator_PastDueDate_ShouldBeValid()
     {
         var result = _updateValidator.Validate(new UpdateTaskRequest(
-            "Title", null, KanbanStatus.Todo, TaskPriority.Medium, DateTimeOffset.UtcNow.AddDays(-1)));
-        Assert.False(result.IsValid);
+            "Title", "A description", KanbanStatus.Todo, TaskPriority.Medium, DateTimeOffset.UtcNow.AddDays(-1)));
+        Assert.True(result.IsValid);
     }
 
     [Fact(DisplayName = "Filter validator should reject inverted created date range.")]

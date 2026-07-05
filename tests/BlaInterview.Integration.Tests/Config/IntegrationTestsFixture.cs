@@ -25,7 +25,7 @@ public class IntegrationTestsFixture : IDisposable
     public AuthAppFactory AuthFactory { get; }
     public TasksAppFactory TasksFactory { get; }
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    public static JsonSerializerOptions JsonOptions { get; } = new()
     {
         PropertyNameCaseInsensitive = true,
         Converters = { new JsonStringEnumConverter() }

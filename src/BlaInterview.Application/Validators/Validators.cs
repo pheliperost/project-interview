@@ -42,9 +42,6 @@ public class UpdateTaskRequestValidator : AbstractValidator<UpdateTaskRequest>
         RuleFor(x => x.Description).NotEmpty().MaximumLength(2000);
         RuleFor(x => x.Status).IsInEnum();
         RuleFor(x => x.Priority).IsInEnum();
-        RuleFor(x => x.DueDate)
-            .Must(d => d == null || d >= DateTimeOffset.UtcNow.Date)
-            .WithMessage("Due date cannot be in the past.");
     }
 }
 

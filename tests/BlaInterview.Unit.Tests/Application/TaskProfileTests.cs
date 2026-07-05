@@ -1,4 +1,3 @@
-using AutoMapper;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Application.Mapping;
 using BlaInterview.Application.Mapping.Profiles;
@@ -9,16 +8,19 @@ using BlaInterview.Unit.Tests.Fixtures;
 
 namespace BlaInterview.Unit.Tests.Application;
 
+[Collection(nameof(MapperCollection))]
 public class TaskProfileTests
 {
-    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<TaskProfile>()).CreateMapper();
+    private readonly MapperFixtures _fixtures;
+
+    public TaskProfileTests(MapperFixtures fixtures) => _fixtures = fixtures;
 
     [Fact(DisplayName = "TaskFilterRequest should trim search and cap page size.")]
     [Trait("Category", "Task Mapper")]
     public void TaskProfile_ToQuery_ShouldMapFilterFields()
     {
         var filter = new TaskFilterRequest("  API  ", [KanbanStatus.Todo], null, null, null, null, 2, 500);
-        var query = _mapper.Map<TaskQuery>(filter);
+        var query = _fixtures.Mapper.Map<TaskQuery>(filter);
 
         Assert.Equal("API", query.SearchTerm);
         Assert.Single(query.Statuses!);
@@ -32,7 +34,7 @@ public class TaskProfileTests
     {
         var task = DomainFixtures.GenerateValidTaskItem("user1", KanbanStatus.Todo);
         var response = new TaskListResponse(
-            [_mapper.Map<TaskResponse>(task)],
+            [_fixtures.Mapper.Map<TaskResponse>(task)],
             10,
             2,
             5);
@@ -49,7 +51,7 @@ public class TaskProfileTests
     {
         var now = DateTimeOffset.UtcNow;
         var request = new CreateTaskRequest("New task", "Desc", null, null);
-        var entity = _mapper.Map<TaskItem>(request, opt =>
+        var entity = _fixtures.Mapper.Map<TaskItem>(request, opt =>
         {
             opt.Items[TaskProfile.UserIdContextKey] = "user1";
             opt.Items[TaskProfile.NowContextKey] = now;
@@ -66,7 +68,7 @@ public class TaskProfileTests
     public void TaskProfile_ToResponse_ShouldMapFields()
     {
         var task = DomainFixtures.GenerateValidTaskItem("user1", KanbanStatus.InProgress);
-        var response = _mapper.Map<TaskResponse>(task);
+        var response = _fixtures.Mapper.Map<TaskResponse>(task);
 
         Assert.Equal(task.Id, response.Id);
         Assert.Equal(task.Title, response.Title);

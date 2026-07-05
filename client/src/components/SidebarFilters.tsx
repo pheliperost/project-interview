@@ -11,12 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
-interface SidebarFiltersProps {
+interface FilterPanelProps {
   filters: TaskFilters;
   onChange: (filters: TaskFilters) => void;
   email: string | null;
   onLogout: () => void;
+  className?: string;
+  showSearch?: boolean;
+  variant?: 'sidebar' | 'drawer';
 }
 
 const DATE_PRESETS: { value: DatePreset; label: string }[] = [
@@ -27,7 +31,34 @@ const DATE_PRESETS: { value: DatePreset; label: string }[] = [
   { value: 'custom', label: 'Custom range' },
 ];
 
-export function SidebarFilters({ filters, onChange, email, onLogout }: SidebarFiltersProps) {
+export const DEFAULT_TASK_FILTERS: TaskFilters = {
+  search: '',
+  statuses: ALL_STATUSES,
+  createdPreset: 'any',
+  updatedPreset: 'any',
+};
+
+export function hasDrawerFiltersActive(filters: TaskFilters) {
+  return (
+    filters.statuses.length !== ALL_STATUSES.length ||
+    filters.createdPreset !== 'any' ||
+    filters.updatedPreset !== 'any'
+  );
+}
+
+export function hasAnyFiltersActive(filters: TaskFilters) {
+  return filters.search.trim() !== '' || hasDrawerFiltersActive(filters);
+}
+
+export function FilterPanel({
+  filters,
+  onChange,
+  email,
+  onLogout,
+  className,
+  showSearch = true,
+  variant = 'sidebar',
+}: FilterPanelProps) {
   function toggleStatus(status: KanbanStatus) {
     const selected = filters.statuses.includes(status)
       ? filters.statuses.filter((s) => s !== status)
@@ -37,30 +68,50 @@ export function SidebarFilters({ filters, onChange, email, onLogout }: SidebarFi
 
   function clearFilters() {
     onChange({
-      search: '',
+      ...filters,
+      search: variant === 'drawer' ? filters.search : '',
       statuses: ALL_STATUSES,
       createdPreset: 'any',
       updatedPreset: 'any',
+      createdFrom: undefined,
+      createdTo: undefined,
+      updatedFrom: undefined,
+      updatedTo: undefined,
     });
   }
 
   return (
-    <aside className="flex w-72 flex-shrink-0 flex-col border-r border-border bg-card/80 p-4">
-      <div className="mb-6">
-        <p className="text-primary text-xs font-bold tracking-widest">SIMPLE TASKS</p>
-        <p className="mt-2 truncate text-sm text-muted-foreground">{email}</p>
-      </div>
+    <div className={cn('flex flex-col', variant === 'drawer' && 'min-h-0 flex-1', className)}>
+      {variant === 'sidebar' && (
+        <div className="mb-6">
+          <p className="text-primary text-xs font-bold tracking-widest">SIMPLE TASKS</p>
+          <p className="mt-2 truncate text-sm text-muted-foreground">{email}</p>
+        </div>
+      )}
 
-      <Input
-        type="search"
-        placeholder="Search tasks..."
-        value={filters.search}
-        onChange={(e) => onChange({ ...filters, search: e.target.value })}
-        className="mb-4"
-      />
+      {variant === 'drawer' && email && (
+        <p className="mb-4 truncate text-sm text-muted-foreground">{email}</p>
+      )}
 
-      <div className="mb-4 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
+      {showSearch && (
+        <Input
+          type="search"
+          placeholder="Search tasks..."
+          value={filters.search}
+          onChange={(e) => onChange({ ...filters, search: e.target.value })}
+          className="mb-4"
+        />
+      )}
+
+      <div className={cn('mb-4 space-y-2', variant === 'drawer' && 'grid grid-cols-2 gap-x-3 gap-y-2 space-y-0')}>
+        <p
+          className={cn(
+            'text-xs font-semibold uppercase tracking-wide text-muted-foreground',
+            variant === 'drawer' && 'col-span-2',
+          )}
+        >
+          Status
+        </p>
         {COLUMNS.map((col) => (
           <label key={col.status} className="flex items-center gap-2 text-sm">
             <Checkbox
@@ -77,6 +128,7 @@ export function SidebarFilters({ filters, onChange, email, onLogout }: SidebarFi
         preset={filters.createdPreset}
         from={filters.createdFrom}
         to={filters.createdTo}
+        compact={variant === 'drawer'}
         onChange={(createdPreset, createdFrom, createdTo) =>
           onChange({ ...filters, createdPreset, createdFrom, createdTo })
         }
@@ -87,6 +139,7 @@ export function SidebarFilters({ filters, onChange, email, onLogout }: SidebarFi
         preset={filters.updatedPreset}
         from={filters.updatedFrom}
         to={filters.updatedTo}
+        compact={variant === 'drawer'}
         onChange={(updatedPreset, updatedFrom, updatedTo) =>
           onChange({ ...filters, updatedPreset, updatedFrom, updatedTo })
         }
@@ -96,9 +149,29 @@ export function SidebarFilters({ filters, onChange, email, onLogout }: SidebarFi
         Clear filters
       </Button>
 
-      <Button type="button" variant="outline" onClick={onLogout} className="mt-auto">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onLogout}
+        className={cn(variant === 'drawer' ? 'mt-6' : 'mt-auto')}
+      >
         Logout
       </Button>
+    </div>
+  );
+}
+
+interface SidebarFiltersProps {
+  filters: TaskFilters;
+  onChange: (filters: TaskFilters) => void;
+  email: string | null;
+  onLogout: () => void;
+}
+
+export function SidebarFilters(props: SidebarFiltersProps) {
+  return (
+    <aside className="sidebar-filters hidden shrink-0 flex-col border-r border-border bg-card/80 p-3 sm:p-4 lg:flex">
+      <FilterPanel {...props} className="h-full min-h-0" />
     </aside>
   );
 }
@@ -108,12 +181,14 @@ function DateFilterGroup({
   preset,
   from,
   to,
+  compact = false,
   onChange,
 }: {
   label: string;
   preset: DatePreset;
   from?: string;
   to?: string;
+  compact?: boolean;
   onChange: (preset: DatePreset, from?: string, to?: string) => void;
 }) {
   return (
@@ -132,7 +207,7 @@ function DateFilterGroup({
         </SelectContent>
       </Select>
       {preset === 'custom' && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className={cn('gap-2', compact ? 'flex flex-col' : 'grid grid-cols-2')}>
           <Input
             type="date"
             value={from?.slice(0, 10) ?? ''}

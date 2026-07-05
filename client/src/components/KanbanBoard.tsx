@@ -7,7 +7,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useMemo, useRef, useState } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { KanbanStatus, Task } from '@/api/types';
 import { COLUMNS } from '@/api/types';
@@ -18,18 +18,14 @@ interface KanbanBoardProps {
   tasks: Task[];
   onStatusChange: (taskId: string, status: KanbanStatus) => Promise<void>;
   onEdit: (task: Task) => void;
-  onReactivate: (taskId: string) => Promise<void>;
+  onMoveTo: (taskId: string, status: KanbanStatus) => void;
   onDelete: (taskId: string) => void;
 }
 
-export function KanbanBoard({
-  tasks,
-  onStatusChange,
-  onEdit,
-  onReactivate,
-  onDelete,
-}: KanbanBoardProps) {
-  const boardRef = useRef<HTMLDivElement>(null);
+export const KanbanBoard = forwardRef<HTMLDivElement, KanbanBoardProps>(function KanbanBoard(
+  { tasks, onStatusChange, onEdit, onMoveTo, onDelete },
+  ref,
+) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -42,10 +38,19 @@ export function KanbanBoard({
     return map;
   }, [tasks]);
 
-  function handleWheel(e: React.WheelEvent) {
-    if (e.shiftKey && boardRef.current) {
-      boardRef.current.scrollLeft += e.deltaY;
+  function handleWheel(e: React.WheelEvent<HTMLDivElement>) {
+    const board = e.currentTarget;
+    const canScrollX = board.scrollWidth > board.clientWidth;
+
+    if (e.shiftKey && canScrollX) {
+      board.scrollLeft += e.deltaY;
       e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
+    if (canScrollX && Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      e.stopPropagation();
     }
   }
 
@@ -72,23 +77,26 @@ export function KanbanBoard({
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div
-        ref={boardRef}
-        onWheel={handleWheel}
-        className="flex flex-1 gap-4 overflow-x-auto pb-4"
-      >
-        {COLUMNS.map((col) => (
-          <KanbanColumn
-            key={col.status}
-            status={col.status}
-            label={col.label}
-            terminal={col.terminal}
-            tasks={grouped[col.status]}
-            onEdit={onEdit}
-            onReactivate={onReactivate}
-            onDelete={onDelete}
-          />
-        ))}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div
+          ref={ref}
+          data-kanban-scroll
+          onWheel={handleWheel}
+          className="kanban-scroll flex h-full min-h-0 flex-1 gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none sm:gap-4"
+        >
+          {COLUMNS.map((col) => (
+            <KanbanColumn
+              key={col.status}
+              status={col.status}
+              label={col.label}
+              terminal={col.terminal}
+              tasks={grouped[col.status]}
+              onEdit={onEdit}
+              onMoveTo={onMoveTo}
+              onDelete={onDelete}
+            />
+          ))}
+        </div>
       </div>
       <DragOverlay>
         {activeTask ? (
@@ -99,4 +107,16 @@ export function KanbanBoard({
       </DragOverlay>
     </DndContext>
   );
+});
+
+/** Scroll board horizontally to center a task card — never touches page scroll. */
+export function scrollBoardToTask(board: HTMLDivElement, taskId: string) {
+  const card = board.querySelector<HTMLElement>(`[data-task-id="${taskId}"]`);
+  if (!card) return;
+
+  const boardRect = board.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
+  const cardCenter = cardRect.left - boardRect.left + board.scrollLeft + cardRect.width / 2;
+
+  board.scrollLeft = Math.max(0, cardCenter - board.clientWidth / 2);
 }

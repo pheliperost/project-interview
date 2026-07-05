@@ -27,10 +27,10 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="auth-shell flex items-center justify-center p-4 sm:p-6">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-4 rounded-2xl border border-border bg-card p-8 shadow-xl"
+        className="w-full max-w-md space-y-4 rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8"
       >
         <div>
           <p className="text-primary text-sm font-semibold tracking-wide">Simple Tasks</p>

@@ -29,10 +29,96 @@
   color-scheme: dark;
 }
 
+html,
 body {
-  @apply bg-background text-foreground min-h-screen antialiased;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  overflow-x: clip;
+}
+
+#root {
+  height: 100%;
+  min-height: 100svh;
+  width: 100%;
+  overflow: hidden;
+  overflow-x: clip;
+}
+
+.app-shell {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  overflow-x: clip;
+}
+
+.auth-shell {
+  height: 100%;
+  min-height: 100svh;
+  width: 100%;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+.sidebar-filters {
+  width: clamp(14rem, 20%, 18rem);
+}
+
+/* Mobile: column width as % of kanban scroll container (not vw — vw breaks in DevTools device mode) */
+.kanban-column {
+  flex: 0 0 88%;
+  width: 88%;
+  min-width: 88%;
+  max-width: 88%;
+}
+
+@media (min-width: 640px) {
+  .kanban-column {
+    flex: 0 0 clamp(12rem, 42%, 18rem);
+    width: clamp(12rem, 42%, 18rem);
+    min-width: clamp(12rem, 42%, 18rem);
+    max-width: 18rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .kanban-column {
+    flex: 0 0 clamp(13rem, 28%, 18rem);
+    width: clamp(13rem, 28%, 18rem);
+    min-width: clamp(13rem, 28%, 18rem);
+    max-width: 20rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .kanban-column {
+    flex: 0 0 clamp(14rem, 16%, 20rem);
+    width: clamp(14rem, 16%, 20rem);
+    min-width: clamp(14rem, 16%, 20rem);
+    max-width: 20rem;
+  }
+
+  .sidebar-filters {
+    width: clamp(14rem, 18rem, 18rem);
+  }
+}
+
+.kanban-scroll {
+  width: 100%;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior: contain;
 }
 
 * {
   box-sizing: border-box;
+}
+
+.task-date-input,
+input[type='date'] {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
 }

@@ -1,42 +1,47 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Filter, Plus } from 'lucide-react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api, buildDateRange } from '@/api/client';
 import type { KanbanStatus, Task, TaskFilters } from '@/api/types';
 import { ALL_STATUSES } from '@/api/types';
 import { useAuth } from '@/auth/AuthContext';
-import { KanbanBoard } from '@/components/KanbanBoard';
+import { DeleteConfirmBanner } from '@/components/DeleteConfirmBanner';
+import { FiltersDrawer } from '@/components/FiltersDrawer';
+import { KanbanBoard, scrollBoardToTask } from '@/components/KanbanBoard';
 import { BoardSkeleton } from '@/components/BoardSkeleton';
-import { SidebarFilters } from '@/components/SidebarFilters';
-import { TaskDialog } from '@/components/TaskDialog';
-import { Button } from '@/components/ui/button';
+import { MobileSearchBar } from '@/components/MobileSearchBar';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  DEFAULT_TASK_FILTERS,
+  hasDrawerFiltersActive,
+  SidebarFilters,
+} from '@/components/SidebarFilters';
+import { TaskEditor } from '@/components/TaskEditor';
+import { Button } from '@/components/ui/button';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { resetPageScrollLock } from '@/lib/scrollLock';
 
-const defaultFilters: TaskFilters = {
-  search: '',
-  statuses: ALL_STATUSES,
-  createdPreset: 'any',
-  updatedPreset: 'any',
-};
+const defaultFilters: TaskFilters = DEFAULT_TASK_FILTERS;
+
+function isTerminalStatus(status: KanbanStatus) {
+  return status === 'Completed' || status === 'Cancelled';
+}
 
 export function BoardPage() {
   const { email, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const boardRef = useRef<HTMLDivElement>(null);
+  const pendingScrollRestore = useRef<{ taskId: string | null; scrollLeft: number } | null>(null);
+
   const [filters, setFilters] = useState<TaskFilters>(defaultFilters);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showTip, setShowTip] = useState(() => !localStorage.getItem('scroll_tip_dismissed'));
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)');
 
   const queryFilters = useMemo(() => {
     const created = buildDateRange(filters.createdPreset, filters.createdFrom, filters.createdTo);
@@ -114,20 +119,140 @@ export function BoardPage() {
     });
   }
 
+  async function handleMoveTo(taskId: string, status: KanbanStatus) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || task.status === status) return;
+
+    if (isTerminalStatus(task.status) && status === 'Todo') {
+      await reactivateMutation.mutateAsync(taskId);
+      return;
+    }
+
+    if (isTerminalStatus(task.status)) {
+      toast.error('Done/Canceled tasks can only move to To Do');
+      return;
+    }
+
+    await handleStatusChange(taskId, status);
+  }
+
+  function openEditor(task: Task | null) {
+    pendingScrollRestore.current = {
+      taskId: task?.id ?? null,
+      scrollLeft: boardRef.current?.scrollLeft ?? 0,
+    };
+    setEditingTask(task);
+    setEditorOpen(true);
+    setDeleteConfirm(null);
+  }
+
+  function closeEditor() {
+    setEditorOpen(false);
+    setEditingTask(null);
+  }
+
+  useEffect(() => {
+    if (editorOpen || !pendingScrollRestore.current) return;
+
+    const { taskId, scrollLeft } = pendingScrollRestore.current;
+    pendingScrollRestore.current = null;
+
+    const timer = window.setTimeout(() => {
+      const board = boardRef.current;
+      if (!board) return;
+      board.scrollLeft = scrollLeft;
+      if (taskId) {
+        scrollBoardToTask(board, taskId);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [editorOpen]);
+
+  useEffect(() => {
+    if (isLargeScreen && filtersOpen) setFiltersOpen(false);
+  }, [isLargeScreen, filtersOpen]);
+
+  useEffect(() => {
+    function onViewportChange() {
+      const board = boardRef.current;
+      if (board) {
+        const maxScroll = Math.max(0, board.scrollWidth - board.clientWidth);
+        if (board.scrollLeft > maxScroll) board.scrollLeft = maxScroll;
+      }
+      if (!editorOpen && !filtersOpen) resetPageScrollLock();
+    }
+
+    window.addEventListener('resize', onViewportChange);
+    window.visualViewport?.addEventListener('resize', onViewportChange);
+    return () => {
+      window.removeEventListener('resize', onViewportChange);
+      window.visualViewport?.removeEventListener('resize', onViewportChange);
+    };
+  }, [editorOpen, filtersOpen]);
+
+  async function handleSaveTask(data: {
+    title: string;
+    description: string;
+    priority: Task['priority'];
+    dueDate?: string;
+    status?: KanbanStatus;
+  }) {
+    if (editingTask) {
+      const newStatus = data.status ?? editingTask.status;
+
+      if (isTerminalStatus(editingTask.status) && newStatus !== editingTask.status) {
+        if (newStatus === 'Todo') {
+          await reactivateMutation.mutateAsync(editingTask.id);
+        } else {
+          toast.error('Done/Canceled tasks can only move to To Do');
+          return;
+        }
+      }
+
+      const statusForUpdate = isTerminalStatus(editingTask.status)
+        ? newStatus === 'Todo'
+          ? 'Todo'
+          : editingTask.status
+        : newStatus;
+
+      await updateMutation.mutateAsync({
+        id: editingTask.id,
+        body: {
+          title: data.title,
+          description: data.description,
+          status: statusForUpdate,
+          priority: data.priority,
+          dueDate: data.dueDate ?? null,
+        },
+      });
+    } else {
+      await createMutation.mutateAsync(data);
+    }
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="app-shell flex h-full min-h-0 w-full overflow-hidden">
       <SidebarFilters
         filters={filters}
         onChange={setFilters}
         email={email}
         onLogout={handleLogout}
       />
-      <main className="flex flex-1 flex-col overflow-hidden p-4">
-        <header className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">My Kanban Board</h1>
+      <FiltersDrawer
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        filters={filters}
+        onChange={setFilters}
+        email={email}
+        onLogout={handleLogout}
+      />
+      <main className="board-main flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-4">
+        <header className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold sm:text-2xl">My Kanban Board</h1>
             {showTip && (
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 hidden text-xs text-zinc-500 md:block">
                 Tip: Hold <kbd className="rounded bg-zinc-800 px-1">Shift</kbd> and scroll to move
                 sideways across columns.{' '}
                 <button
@@ -143,88 +268,74 @@ export function BoardPage() {
               </p>
             )}
           </div>
-          {(isLoading || isFetching) && (
-            <span className="text-sm text-zinc-500">Loading…</span>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {(isLoading || isFetching) && (
+              <span className="text-sm text-zinc-500">Loading…</span>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="relative lg:hidden"
+              onClick={() => setFiltersOpen(true)}
+            >
+              <Filter size={16} />
+              Filters
+              {hasDrawerFiltersActive(filters) && (
+                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" aria-hidden />
+              )}
+            </Button>
+            <Button type="button" size="sm" className="sm:hidden" onClick={() => openEditor(null)}>
+              <Plus size={16} />
+              New
+            </Button>
+          </div>
         </header>
+
+        <MobileSearchBar filters={filters} onChange={setFilters} />
+
+        {deleteConfirm && (
+          <DeleteConfirmBanner
+            onCancel={() => setDeleteConfirm(null)}
+            onConfirm={async () => {
+              await deleteMutation.mutateAsync(deleteConfirm);
+              setDeleteConfirm(null);
+            }}
+          />
+        )}
 
         {isLoading ? (
           <BoardSkeleton />
         ) : (
-          <KanbanBoard
-            tasks={tasks}
-            onStatusChange={handleStatusChange}
-            onEdit={(task) => {
-              setEditingTask(task);
-              setDialogOpen(true);
-            }}
-            onReactivate={async (id) => {
-              await reactivateMutation.mutateAsync(id);
-            }}
-            onDelete={(id) => setDeleteConfirm(id)}
-          />
+          <div className="flex min-h-0 flex-1 flex-col">
+            <KanbanBoard
+              ref={boardRef}
+              tasks={tasks}
+              onStatusChange={handleStatusChange}
+              onMoveTo={handleMoveTo}
+              onEdit={(task) => openEditor(task)}
+              onDelete={(id) => setDeleteConfirm(id)}
+            />
+          </div>
         )}
 
         <Button
           type="button"
           size="icon-lg"
-          onClick={() => {
-            setEditingTask(null);
-            setDialogOpen(true);
-          }}
-          className="fixed bottom-6 right-6 size-14 rounded-full shadow-lg"
+          onClick={() => openEditor(null)}
+          className="fixed right-4 bottom-4 z-40 hidden size-14 rounded-full shadow-lg sm:inline-flex sm:right-6 sm:bottom-6"
           aria-label="Create task"
         >
           <Plus size={24} />
         </Button>
       </main>
 
-      <TaskDialog
-        open={dialogOpen}
+      <TaskEditor
+        open={editorOpen}
         task={editingTask}
-        onClose={() => setDialogOpen(false)}
-        onSave={async (data) => {
-          if (editingTask) {
-            await updateMutation.mutateAsync({
-              id: editingTask.id,
-              body: {
-                title: data.title,
-                description: data.description,
-                status: editingTask.status,
-                priority: data.priority,
-                dueDate: data.dueDate ?? null,
-              },
-            });
-          } else {
-            await createMutation.mutateAsync(data);
-          }
-        }}
+        onClose={closeEditor}
+        onSave={handleSaveTask}
       />
-
-      <Dialog open={Boolean(deleteConfirm)} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>Delete task?</DialogTitle>
-            <DialogDescription>This action cannot be undone.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setDeleteConfirm(null)}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={async () => {
-                if (!deleteConfirm) return;
-                await deleteMutation.mutateAsync(deleteConfirm);
-                setDeleteConfirm(null);
-              }}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

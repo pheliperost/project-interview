@@ -86,6 +86,12 @@ public class TaskService : BaseService, ITaskService
             return null;
         }
 
+        if (IsDueDateChangedToPast(task.DueDate, request.DueDate))
+        {
+            Notify("Due date cannot be in the past.");
+            return null;
+        }
+
         task.Title = request.Title;
         task.Description = request.Description;
         task.Priority = request.Priority;
@@ -143,5 +149,23 @@ public class TaskService : BaseService, ITaskService
         }
 
         return task;
+    }
+
+    private static bool IsDueDateChangedToPast(DateTimeOffset? current, DateTimeOffset? requested)
+    {
+        if (requested is null || DueDatesEqual(current, requested))
+            return false;
+
+        return requested.Value.UtcDateTime.Date < DateTimeOffset.UtcNow.Date;
+    }
+
+    private static bool DueDatesEqual(DateTimeOffset? left, DateTimeOffset? right)
+    {
+        if (left is null && right is null)
+            return true;
+        if (left is null || right is null)
+            return false;
+
+        return left.Value.UtcDateTime.Date == right.Value.UtcDateTime.Date;
     }
 }

@@ -68,8 +68,12 @@ As a professional managing my own work, I want a secure personal Kanban board wh
 
 - Title is required; validation errors return **400**.
 - Priority is one of: Low, Medium, High, Urgent.
-- Due date is **optional**; if provided, dates in the past are rejected on create/update.
-- Dates are timezone-aware (ISO 8601 with offset in API; displayed in local timezone in UI).
+- Due date is **optional** (date only — compared by UTC calendar day in the API).
+- **Create:** past due dates are rejected (**400**).
+- **Update:** changing the due date to a different past date is rejected (**400**); clearing the due date is allowed.
+- **Update:** if the due date is unchanged (same calendar day), updates are allowed even when the task is overdue — so Kanban drag/edit and completed late work are not blocked by historical due dates.
+- **Update:** changing the due date to today or a future date is allowed.
+- Dates are stored as ISO 8601 (`DateTimeOffset`, UTC); the UI date picker works with calendar dates only.
 - New tasks default to **To Do** status and **Medium** priority if not specified.
 - I can update and delete my own tasks.
 - Delete asks for confirmation (dialog) before removing.

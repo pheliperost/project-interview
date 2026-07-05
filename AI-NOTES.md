@@ -128,3 +128,8 @@ Log of meaningful AI-assisted sessions: what was suggested, what was accepted/re
 - **User request:** Replace manual `TaskMapper` with AutoMapper for LessonsManagement consistency and scaling.
 - **Changes:** Added AutoMapper 14.0.0; `TaskProfile` (`TaskItem` ↔ DTOs, `TaskFilterRequest` → `TaskQuery`, create mapping with context items); `TaskPagination` constants; `TaskService` injects `IMapper`; removed `TaskMapper.cs`; renamed tests to `TaskProfileTests`.
 - **Verified:** `dotnet test` (105 pass).
+
+## Test fixture polish (2026-07-05)
+
+- **Changes:** `MapperFixtures` + `MapperCollection` for `TaskProfileTests`; `TaskServiceTests` calls `CreateService()` per test (before mock setup); `IntegrationTestsFixture.JsonOptions` shared across API tests; removed empty `TaskServiceFixtures.Dispose`.
+- **Verified:** `dotnet test` (66 unit + 45 integration pass).

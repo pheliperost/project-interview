@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Domain.Enums;
 using BlaInterview.Integration.Tests.Config;
@@ -11,12 +10,8 @@ namespace BlaInterview.Integration.Tests.Api;
 public class AuthTests
 {
     private readonly IntegrationTestsFixture _fixture;
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public AuthTests(IntegrationTestsFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    public AuthTests(IntegrationTestsFixture fixture) => _fixture = fixture;
 
     [Fact(DisplayName = "Getting tasks without a token should return 401.")]
     [Trait("Category", "Integration Web - Auth")]
@@ -61,7 +56,7 @@ public class AuthTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions);
+        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.False(string.IsNullOrWhiteSpace(auth?.Token));
     }
 }

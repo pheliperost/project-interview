@@ -1,7 +1,6 @@
 using AutoMapper;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Application.Interfaces;
-using BlaInterview.Application.Mapping.Profiles;
 using BlaInterview.Application.Services;
 using BlaInterview.Application.Validators;
 using BlaInterview.Domain.Entities;
@@ -18,14 +17,14 @@ public class TaskServiceCollection : ICollectionFixture<TaskServiceFixtures>
 {
 }
 
-public class TaskServiceFixtures : IDisposable
+public class TaskServiceFixtures
 {
     public AutoMocker Mocker { get; private set; } = null!;
 
     public TaskService GetService()
     {
         Mocker = new AutoMocker();
-        Mocker.Use<IMapper>(new MapperConfiguration(cfg => cfg.AddProfile<TaskProfile>()).CreateMapper());
+        Mocker.Use<IMapper>(MapperFixtures.CreateMapper());
         Mocker.Use<IValidator<CreateTaskRequest>>(new CreateTaskRequestValidator());
         Mocker.Use<IValidator<UpdateTaskRequest>>(new UpdateTaskRequestValidator());
         Mocker.Use<IValidator<TaskFilterRequest>>(new TaskFilterRequestValidator());
@@ -57,6 +56,16 @@ public class TaskServiceFixtures : IDisposable
             DateTimeOffset.UtcNow.AddDays(-1));
     }
 
+    public UpdateTaskRequest GenerateInvalidUpdateRequestPastDueDate(KanbanStatus status = KanbanStatus.Todo)
+    {
+        return new UpdateTaskRequest(
+            "Past due task",
+            "A description",
+            status,
+            TaskPriority.Medium,
+            DateTimeOffset.UtcNow.AddDays(-1));
+    }
+
     public UpdateTaskRequest GenerateValidUpdateRequest(
         KanbanStatus status = KanbanStatus.InProgress,
         TaskPriority priority = TaskPriority.Medium)
@@ -76,9 +85,5 @@ public class TaskServiceFixtures : IDisposable
         var task = DomainFixtures.GenerateValidTaskItem(userId, status);
         task.Status = status;
         return task;
-    }
-
-    public void Dispose()
-    {
     }
 }

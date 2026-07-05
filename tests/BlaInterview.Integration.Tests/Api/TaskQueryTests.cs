@@ -1,7 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Integration.Tests.Config;
 
@@ -11,16 +9,8 @@ namespace BlaInterview.Integration.Tests.Api;
 public class TaskQueryTests
 {
     private readonly IntegrationTestsFixture _fixture;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
-    };
 
-    public TaskQueryTests(IntegrationTestsFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    public TaskQueryTests(IntegrationTestsFixture fixture) => _fixture = fixture;
 
     [Fact(DisplayName = "Listing tasks with page and page size should return correct metadata.")]
     [Trait("Category", "Integration Web - Tasks")]
@@ -34,7 +24,7 @@ public class TaskQueryTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(JsonOptions);
+        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.NotNull(list);
         Assert.Equal(1, list!.Page);
         Assert.Equal(2, list.PageSize);

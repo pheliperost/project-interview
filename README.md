@@ -11,9 +11,23 @@ Personal Kanban task board built with **Clean Architecture** (.NET) and **React 
 
 ## User story
 
-As a professional managing my own work, I want a secure personal Kanban board where I can create tasks with priorities and due dates, drag them across my workflow, and clearly mark work as done or canceled, so that I always know what to focus on next and can deliberately reopen work when plans change, without sharing or mixing tasks with other users.
+**Informal story** (drives the exercise scope and demo narrative):
 
-Scoped acceptance criteria: [docs/user-stories.md](docs/user-stories.md) (S1–S7).
+> As a professional managing my own work, I want a secure personal Kanban board where I can create tasks with priorities and due dates, drag them across my workflow, and clearly mark work as done or canceled, so that I always know what to focus on next and can deliberately reopen work when plans change, without sharing or mixing tasks with other users.
+
+**Scoped stories** derived from that narrative:
+
+| # | Story | Outcome |
+|---|--------|---------|
+| S1 | Register, log in, log out | JWT session; auto-login after register |
+| S2 | Private task ownership | My tasks only; another user's ID → 403 |
+| S3 | Create and edit tasks | Title, description, priority, optional due date; validation on save |
+| S4 | Kanban board view | Six columns; priority badges and due-date urgency |
+| S5 | Drag-and-drop status | Move cards across active columns; drop into Done/Canceled |
+| S6 | Reactivate finished work | Terminal columns: reopen via dedicated endpoint → To Do |
+| S7 | Search and filter | Sidebar filters; non-matching cards hidden while filtered |
+
+Full acceptance criteria for each story live in `docs/user-stories.md` (optional deep-dive for reviewers).
 
 ## Stack
 

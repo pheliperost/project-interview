@@ -135,7 +135,7 @@ Segregated into **two assemblies** — unit vs integration — with shared colle
 | `Application/` | `TaskServiceTests`, `ValidatorTests`, `NotificationTests`, `TaskProfileTests` |
 | `Infrastructure/` | `AuthServiceTests`, `JwtTokenServiceTests` |
 | `Api/` | `AppExceptionHandlerTests` |
-| `Fixtures/` | `TaskServiceFixtures` + `DomainFixtures` (Bogus valid/invalid builders) |
+| `Fixtures/` | `TaskServiceFixtures`, `AuthServiceFixtures`, `MapperFixtures`, `DomainFixtures` (Bogus valid/invalid builders) |
 | `Data/` | `MemberData` providers (`TaskItemTerminalData`, `KanbanStatusTransitionData`) |
 
 Patterns: `[Collection]` + `ICollectionFixture`, `[Trait("Category", ...)]`, `[Fact/Theory(DisplayName=...)]`, Arrange/Act/Assert comments.

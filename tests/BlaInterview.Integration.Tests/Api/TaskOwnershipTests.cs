@@ -1,7 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Domain.Enums;
 using BlaInterview.Integration.Tests.Config;
@@ -12,16 +10,8 @@ namespace BlaInterview.Integration.Tests.Api;
 public class TaskOwnershipTests
 {
     private readonly IntegrationTestsFixture _fixture;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
-    };
 
-    public TaskOwnershipTests(IntegrationTestsFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    public TaskOwnershipTests(IntegrationTestsFixture fixture) => _fixture = fixture;
 
     [Fact(DisplayName = "Getting another user's task should return 403.")]
     [Trait("Category", "Integration Web - Tasks")]
@@ -87,7 +77,7 @@ public class TaskOwnershipTests
             IntegrationTestsFixture.OtherPassword);
         var listResponse = await otherClient.GetAsync("/api/tasks?status=Completed");
         listResponse.EnsureSuccessStatusCode();
-        var list = await listResponse.Content.ReadFromJsonAsync<TaskListResponse>(JsonOptions);
+        var list = await listResponse.Content.ReadFromJsonAsync<TaskListResponse>(IntegrationTestsFixture.JsonOptions);
         var completedTask = list?.Items.FirstOrDefault(t => t.Title.StartsWith("[Other]", StringComparison.Ordinal));
         if (completedTask is null)
             throw new InvalidOperationException("Seeded other-user completed task not found.");
@@ -104,7 +94,7 @@ public class TaskOwnershipTests
 
     private static async Task AssertForbiddenErrorAsync(HttpResponseMessage response)
     {
-        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(JsonOptions);
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(IntegrationTestsFixture.JsonOptions);
         Assert.NotNull(body);
         Assert.True(body!.TryGetValue("error", out var error));
         Assert.Contains("do not have access", error, StringComparison.OrdinalIgnoreCase);

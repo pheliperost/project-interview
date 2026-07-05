@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.Json;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Integration.Tests.Config;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -12,12 +11,8 @@ namespace BlaInterview.Integration.Tests.Api;
 public class AuthExtendedTests
 {
     private readonly IntegrationTestsFixture _fixture;
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public AuthExtendedTests(IntegrationTestsFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    public AuthExtendedTests(IntegrationTestsFixture fixture) => _fixture = fixture;
 
     [Fact(DisplayName = "Registering a new user should return a JWT.")]
     [Trait("Category", "Integration Web - Auth")]
@@ -32,7 +27,7 @@ public class AuthExtendedTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions);
+        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.False(string.IsNullOrWhiteSpace(auth?.Token));
     }
 
@@ -156,7 +151,7 @@ public class AuthExtendedTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(JsonOptions);
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(IntegrationTestsFixture.JsonOptions);
         Assert.Equal("healthy", body?["status"]);
     }
 
@@ -182,7 +177,7 @@ public class AuthExtendedTests
             new LoginRequest(IntegrationTestsFixture.DemoEmail, IntegrationTestsFixture.DemoPassword));
         loginResponse.EnsureSuccessStatusCode();
 
-        var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions);
+        var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>(IntegrationTestsFixture.JsonOptions);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth!.Token);
         return client;
     }

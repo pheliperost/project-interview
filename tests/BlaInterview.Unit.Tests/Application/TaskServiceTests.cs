@@ -15,23 +15,21 @@ namespace BlaInterview.Unit.Tests.Application;
 public class TaskServiceTests
 {
     private readonly TaskServiceFixtures _fixtures;
-    private readonly TaskService _service;
 
-    public TaskServiceTests(TaskServiceFixtures fixtures)
-    {
-        _fixtures = fixtures;
-        _service = fixtures.GetService();
-    }
+    public TaskServiceTests(TaskServiceFixtures fixtures) => _fixtures = fixtures;
+
+    private TaskService CreateService() => _fixtures.GetService();
 
     [Fact(DisplayName = "Creating a valid task should persist through the repository.")]
     [Trait("Category", "Task Service")]
     public async Task TaskService_CreateTask_ValidRequest_ShouldPersist()
     {
         // Arrange
+        var service = CreateService();
         var request = _fixtures.GenerateValidCreateRequest();
 
         // Act
-        var result = await _service.CreateTaskAsync("user1", request);
+        var result = await service.CreateTaskAsync("user1", request);
 
         // Assert
         Assert.NotNull(result);
@@ -46,10 +44,11 @@ public class TaskServiceTests
     public async Task TaskService_CreateTask_EmptyTitle_ShouldNotify()
     {
         // Arrange
+        var service = CreateService();
         var request = _fixtures.GenerateInvalidCreateRequestEmptyTitle();
 
         // Act
-        var result = await _service.CreateTaskAsync("user1", request);
+        var result = await service.CreateTaskAsync("user1", request);
 
         // Assert
         Assert.Null(result);
@@ -62,15 +61,157 @@ public class TaskServiceTests
     public async Task TaskService_CreateTask_PastDueDate_ShouldNotify()
     {
         // Arrange
+        var service = CreateService();
         var request = _fixtures.GenerateInvalidCreateRequestPastDueDate();
 
         // Act
-        var result = await _service.CreateTaskAsync("user1", request);
+        var result = await service.CreateTaskAsync("user1", request);
 
         // Assert
         Assert.Null(result);
         _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.AddAsync(It.IsAny<TaskItem>(), default), Times.Never);
         _fixtures.Mocker.GetMock<INotifyer>().Verify(m => m.Handle(It.IsAny<Notification>()), Times.AtLeastOnce);
+    }
+
+    [Fact(DisplayName = "Updating a task to a new past due date should notify validation error.")]
+    [Trait("Category", "Task Service")]
+    public async Task TaskService_UpdateTask_PastDueDate_ShouldNotify()
+    {
+        // Arrange
+        var service = CreateService();
+        var taskId = Guid.NewGuid();
+        var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Todo);
+        task.DueDate = DateTimeOffset.UtcNow.AddDays(3);
+        var request = _fixtures.GenerateInvalidUpdateRequestPastDueDate();
+
+        _fixtures.Mocker.GetMock<ITaskRepository>()
+            .Setup(r => r.GetByIdAsync(taskId, default))
+            .ReturnsAsync(task);
+
+        // Act
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
+
+        // Assert
+        Assert.Null(result);
+        _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.UpdateAsync(It.IsAny<TaskItem>(), default), Times.Never);
+        _fixtures.Mocker.GetMock<INotifyer>().Verify(m => m.Handle(It.IsAny<Notification>()), Times.AtLeastOnce);
+    }
+
+    [Fact(DisplayName = "Updating a task with an unchanged past due date should succeed.")]
+    [Trait("Category", "Task Service")]
+    public async Task TaskService_UpdateTask_UnchangedPastDueDate_ShouldSucceed()
+    {
+        // Arrange
+        var service = CreateService();
+        var taskId = Guid.NewGuid();
+        var pastDue = DateTimeOffset.UtcNow.AddDays(-2);
+        var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Completed);
+        task.DueDate = pastDue;
+        var request = new UpdateTaskRequest(
+            "Updated title",
+            "Updated description",
+            KanbanStatus.Completed,
+            TaskPriority.High,
+            pastDue);
+
+        _fixtures.Mocker.GetMock<ITaskRepository>()
+            .Setup(r => r.GetByIdAsync(taskId, default))
+            .ReturnsAsync(task);
+
+        // Act
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Updated title", result!.Title);
+        _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.UpdateAsync(It.IsAny<TaskItem>(), default), Times.Once);
+        _fixtures.Mocker.GetMock<INotifyer>().Verify(m => m.Handle(It.IsAny<Notification>()), Times.Never);
+    }
+
+    [Fact(DisplayName = "Updating a task with the same due date at midnight should succeed.")]
+    [Trait("Category", "Task Service")]
+    public async Task TaskService_UpdateTask_SameDueDateDifferentTime_ShouldSucceed()
+    {
+        // Arrange — simulates date-picker round-trip (full timestamp in DB, date-only on save)
+        var service = CreateService();
+        var taskId = Guid.NewGuid();
+        var stored = DateTimeOffset.UtcNow.AddDays(-2).AddHours(14);
+        var sameDayMidnight = new DateTimeOffset(stored.UtcDateTime.Date, TimeSpan.Zero);
+        var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Completed);
+        task.DueDate = stored;
+        var request = new UpdateTaskRequest(
+            "Updated title",
+            "Updated description",
+            KanbanStatus.Completed,
+            TaskPriority.High,
+            sameDayMidnight);
+
+        _fixtures.Mocker.GetMock<ITaskRepository>()
+            .Setup(r => r.GetByIdAsync(taskId, default))
+            .ReturnsAsync(task);
+
+        // Act
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
+
+        // Assert
+        Assert.NotNull(result);
+        _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.UpdateAsync(It.IsAny<TaskItem>(), default), Times.Once);
+    }
+
+    [Fact(DisplayName = "Clearing a past due date on update should succeed.")]
+    [Trait("Category", "Task Service")]
+    public async Task TaskService_UpdateTask_ClearPastDueDate_ShouldSucceed()
+    {
+        // Arrange
+        var service = CreateService();
+        var taskId = Guid.NewGuid();
+        var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Todo);
+        task.DueDate = DateTimeOffset.UtcNow.AddDays(-1);
+        var request = new UpdateTaskRequest(
+            task.Title,
+            task.Description!,
+            task.Status,
+            task.Priority,
+            null);
+
+        _fixtures.Mocker.GetMock<ITaskRepository>()
+            .Setup(r => r.GetByIdAsync(taskId, default))
+            .ReturnsAsync(task);
+
+        // Act
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
+
+        // Assert
+        Assert.NotNull(result);
+        _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.UpdateAsync(It.IsAny<TaskItem>(), default), Times.Once);
+    }
+
+    [Fact(DisplayName = "Changing due date to a different past day should notify validation error.")]
+    [Trait("Category", "Task Service")]
+    public async Task TaskService_UpdateTask_DifferentPastDueDate_ShouldNotify()
+    {
+        // Arrange
+        var service = CreateService();
+        var taskId = Guid.NewGuid();
+        var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Todo);
+        task.DueDate = DateTimeOffset.UtcNow.AddDays(-5);
+        var request = new UpdateTaskRequest(
+            task.Title,
+            task.Description!,
+            task.Status,
+            task.Priority,
+            DateTimeOffset.UtcNow.AddDays(-2));
+
+        _fixtures.Mocker.GetMock<ITaskRepository>()
+            .Setup(r => r.GetByIdAsync(taskId, default))
+            .ReturnsAsync(task);
+
+        // Act
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
+
+        // Assert
+        Assert.Null(result);
+        _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.UpdateAsync(It.IsAny<TaskItem>(), default), Times.Never);
     }
 
     [Theory(DisplayName = "Updating status from a terminal task should notify.")]
@@ -79,6 +220,7 @@ public class TaskServiceTests
     public async Task TaskService_UpdateStatus_FromTerminal_ShouldNotify(KanbanStatus currentStatus, KanbanStatus targetStatus)
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("user1", currentStatus);
 
@@ -89,7 +231,7 @@ public class TaskServiceTests
         var request = _fixtures.GenerateValidUpdateRequest(targetStatus);
 
         // Act
-        var result = await _service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
 
         // Assert
         Assert.Null(result);
@@ -103,6 +245,7 @@ public class TaskServiceTests
     public async Task TaskService_UpdateStatus_ActiveTransition_ShouldSucceed(KanbanStatus currentStatus, KanbanStatus targetStatus)
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("user1", currentStatus);
 
@@ -113,7 +256,7 @@ public class TaskServiceTests
         var request = _fixtures.GenerateValidUpdateRequest(targetStatus);
 
         // Act
-        var result = await _service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
 
         // Assert
         Assert.NotNull(result);
@@ -127,6 +270,7 @@ public class TaskServiceTests
     public async Task TaskService_Reactivate_CompletedTask_ShouldReturnTodo()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Completed);
 
@@ -135,7 +279,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await _service.ReactivateAsync("user1", taskId);
+        var result = await service.ReactivateAsync("user1", taskId);
 
         // Assert
         Assert.NotNull(result);
@@ -149,6 +293,7 @@ public class TaskServiceTests
     public async Task TaskService_Reactivate_ActiveTask_ShouldNotify()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.InProgress);
 
@@ -157,7 +302,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await _service.ReactivateAsync("user1", taskId);
+        var result = await service.ReactivateAsync("user1", taskId);
 
         // Assert
         Assert.Null(result);
@@ -170,6 +315,7 @@ public class TaskServiceTests
     public async Task TaskService_GetTask_OtherUsersTask_ShouldNotify403()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("other", KanbanStatus.Todo);
 
@@ -178,7 +324,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await _service.GetTaskByIdAsync("user1", taskId);
+        var result = await service.GetTaskByIdAsync("user1", taskId);
 
         // Assert
         Assert.Null(result);
@@ -192,6 +338,7 @@ public class TaskServiceTests
     public async Task TaskService_UpdateTask_OtherUsersTask_ShouldNotify403()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("other", KanbanStatus.InProgress);
         var request = _fixtures.GenerateValidUpdateRequest();
@@ -201,7 +348,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await _service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
 
         // Assert
         Assert.Null(result);
@@ -216,6 +363,7 @@ public class TaskServiceTests
     public async Task TaskService_DeleteTask_OtherUsersTask_ShouldNotify403()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("other", KanbanStatus.Todo);
 
@@ -224,7 +372,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        await _service.DeleteTaskAsync("user1", taskId);
+        await service.DeleteTaskAsync("user1", taskId);
 
         // Assert
         _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.DeleteAsync(It.IsAny<TaskItem>(), default), Times.Never);
@@ -238,6 +386,7 @@ public class TaskServiceTests
     public async Task TaskService_ReactivateTask_OtherUsersTask_ShouldNotify403()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("other", KanbanStatus.Completed);
 
@@ -246,7 +395,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await _service.ReactivateAsync("user1", taskId);
+        var result = await service.ReactivateAsync("user1", taskId);
 
         // Assert
         Assert.Null(result);
@@ -261,6 +410,7 @@ public class TaskServiceTests
     public async Task TaskService_DeleteTask_OwnedTask_ShouldPersist()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Todo);
 
@@ -269,7 +419,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        await _service.DeleteTaskAsync("user1", taskId);
+        await service.DeleteTaskAsync("user1", taskId);
 
         // Assert
         _fixtures.Mocker.GetMock<ITaskRepository>().Verify(r => r.DeleteAsync(task, default), Times.Once);
@@ -281,13 +431,14 @@ public class TaskServiceTests
     public async Task TaskService_GetTask_NotFound_ShouldNotify404()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         _fixtures.Mocker.GetMock<ITaskRepository>()
             .Setup(r => r.GetByIdAsync(taskId, default))
             .ReturnsAsync((TaskItem?)null);
 
         // Act
-        var result = await _service.GetTaskByIdAsync("user1", taskId);
+        var result = await service.GetTaskByIdAsync("user1", taskId);
 
         // Assert
         Assert.Null(result);
@@ -301,10 +452,11 @@ public class TaskServiceTests
     public async Task TaskService_GetTasks_InvalidDateRange_ShouldNotify()
     {
         // Arrange
+        var service = CreateService();
         var filter = new TaskFilterRequest(null, null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(-1), null, null, null, null);
 
         // Act
-        var result = await _service.GetTasksAsync("user1", filter);
+        var result = await service.GetTasksAsync("user1", filter);
 
         // Assert
         Assert.Null(result);
@@ -317,6 +469,7 @@ public class TaskServiceTests
     public async Task TaskService_UpdateTask_TerminalSameStatus_ShouldSucceed()
     {
         // Arrange
+        var service = CreateService();
         var taskId = Guid.NewGuid();
         var task = _fixtures.GenerateOwnedTask("user1", KanbanStatus.Completed);
         var request = _fixtures.GenerateValidUpdateRequest(KanbanStatus.Completed);
@@ -326,7 +479,7 @@ public class TaskServiceTests
             .ReturnsAsync(task);
 
         // Act
-        var result = await _service.UpdateTaskAsync("user1", taskId, request);
+        var result = await service.UpdateTaskAsync("user1", taskId, request);
 
         // Assert
         Assert.NotNull(result);

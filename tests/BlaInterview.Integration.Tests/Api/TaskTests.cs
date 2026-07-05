@@ -1,7 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Domain.Enums;
 using BlaInterview.Integration.Tests.Config;
@@ -12,16 +10,8 @@ namespace BlaInterview.Integration.Tests.Api;
 public class TaskTests
 {
     private readonly IntegrationTestsFixture _fixture;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
-    };
 
-    public TaskTests(IntegrationTestsFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    public TaskTests(IntegrationTestsFixture fixture) => _fixture = fixture;
 
     [Fact(DisplayName = "Creating a task with a valid token should return 201.")]
     [Trait("Category", "Integration Web - Tasks")]
@@ -50,7 +40,7 @@ public class TaskTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(JsonOptions);
+        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.NotNull(list);
         Assert.NotEmpty(list!.Items);
         Assert.True(list.TotalCount >= list.Items.Count);
@@ -70,7 +60,7 @@ public class TaskTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(JsonOptions);
+        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.NotNull(list);
         Assert.NotEmpty(list!.Items);
         Assert.All(list.Items, t => Assert.Contains("API", t.Title, StringComparison.OrdinalIgnoreCase));
@@ -88,7 +78,7 @@ public class TaskTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(JsonOptions);
+        var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.NotNull(list);
         Assert.NotEmpty(list!.Items);
         Assert.All(list.Items, t => Assert.Equal(KanbanStatus.Completed, t.Status));

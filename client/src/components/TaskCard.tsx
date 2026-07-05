@@ -1,8 +1,8 @@
 import { useDraggable } from '@dnd-kit/core';
 import { AlertCircle, Calendar, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
-import type { Task } from '@/api/types';
-import { PRIORITY_COLORS } from '@/api/types';
+import type { KanbanStatus, Task } from '@/api/types';
+import { COLUMNS, PRIORITY_COLORS } from '@/api/types';
 import { DUE_DATE_STYLES, formatDate, getDueDateUrgency } from '@/lib/utils';
 
 interface TaskCardProps {
@@ -10,10 +10,10 @@ interface TaskCardProps {
   draggable?: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onReactivate?: () => void;
+  onMoveTo?: (status: KanbanStatus) => void;
 }
 
-export function TaskCard({ task, draggable = true, onEdit, onDelete, onReactivate }: TaskCardProps) {
+export function TaskCard({ task, draggable = true, onEdit, onDelete, onMoveTo }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     disabled: !draggable,
@@ -22,6 +22,7 @@ export function TaskCard({ task, draggable = true, onEdit, onDelete, onReactivat
 
   const dueUrgency = getDueDateUrgency(task.dueDate);
   const dueClass = dueUrgency ? DUE_DATE_STYLES[dueUrgency] : '';
+  const moveTargets = COLUMNS.filter((col) => col.status !== task.status);
 
   const style = transform
     ? { transform: `translate(${transform.x}px, ${transform.y}px)`, opacity: isDragging ? 0.5 : 1 }
@@ -30,6 +31,7 @@ export function TaskCard({ task, draggable = true, onEdit, onDelete, onReactivat
   return (
     <article
       ref={setNodeRef}
+      data-task-id={task.id}
       style={style}
       className={`rounded-xl border bg-zinc-950 p-3 shadow-sm transition-colors ${
         dueUrgency === 'overdue'
@@ -74,7 +76,7 @@ export function TaskCard({ task, draggable = true, onEdit, onDelete, onReactivat
             <MoreHorizontal size={16} />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 z-10 mt-1 w-36 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg">
+            <div className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg">
               <button
                 type="button"
                 className="block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-800"
@@ -85,18 +87,20 @@ export function TaskCard({ task, draggable = true, onEdit, onDelete, onReactivat
               >
                 Edit
               </button>
-              {onReactivate && (
-                <button
-                  type="button"
-                  className="block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-800"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onReactivate();
-                  }}
-                >
-                  Move to To Do
-                </button>
-              )}
+              {onMoveTo &&
+                moveTargets.map((col) => (
+                  <button
+                    key={col.status}
+                    type="button"
+                    className="block w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-800"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onMoveTo(col.status);
+                    }}
+                  >
+                    Move to {col.label}
+                  </button>
+                ))}
               <button
                 type="button"
                 className="block w-full px-3 py-1.5 text-left text-sm text-red-400 hover:bg-zinc-800"

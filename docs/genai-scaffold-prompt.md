@@ -81,7 +81,7 @@ simple-tasks/
 | `Description` | string | Optional |
 | `Status` | enum | See Kanban columns below |
 | `Priority` | enum | `Low`, `Medium`, `High`, `Urgent` |
-| `DueDate` | DateTimeOffset? | Optional; reject if in the past on create/update; timezone-aware (ISO 8601) |
+| `DueDate` | DateTimeOffset? | Optional; date-only (UTC calendar day). Reject past dates on **create** and when **changing** to a different past date on update; allow unchanged overdue dates and clearing. Stored as ISO 8601 UTC. |
 | `UserId` | string (FK) | Owner — tasks belong to authenticated user |
 | `CreatedAt` | DateTimeOffset (UTC) | Set on create (server-side) |
 | `UpdatedAt` | DateTimeOffset (UTC) | Set on create; update on every change |
@@ -209,7 +209,7 @@ Validation: invalid status → **400**; `from > to` on date ranges → **400**.
 - Description: optional, max length **2000**
 - Status: valid enum; terminal transition rules enforced in service layer
 - Priority: valid enum; default `Medium` on create if omitted
-- DueDate: optional; if provided, must not be in the past
+- DueDate: optional (date only). **Create:** must not be in the past. **Update:** reject only when the user **changes** the due date to a different past calendar day; unchanged overdue dates and clearing (`null`) are allowed. Rationale: overdue and completed tasks keep realistic due dates; backdating is blocked.
 
 ---
 
@@ -434,7 +434,7 @@ Two users with **distinct demo scenarios** — credentials documented in README.
 
 - Tasks in **every column** (Todo, InProgress, OnHold, InReview, Completed, Cancelled)
 - Mix of priorities (Low → Urgent)
-- Mix of due dates (future dates; none in the past)
+- Mix of due dates (future, today, and **past** for overdue/completed demo scenarios)
 - At least one task per column for Kanban + drag demo
 - Good dataset for **search/filter** demo (varied titles)
 

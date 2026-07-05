@@ -1,7 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using BlaInterview.Application.DTOs;
 using BlaInterview.Domain.Enums;
 using BlaInterview.Integration.Tests.Config;
@@ -12,16 +10,8 @@ namespace BlaInterview.Integration.Tests.Api;
 public class TaskCrudTests
 {
     private readonly IntegrationTestsFixture _fixture;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
-    };
 
-    public TaskCrudTests(IntegrationTestsFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    public TaskCrudTests(IntegrationTestsFixture fixture) => _fixture = fixture;
 
     [Fact(DisplayName = "Getting an owned task by id should return 200.")]
     [Trait("Category", "Integration Web - Tasks")]
@@ -36,7 +26,7 @@ public class TaskCrudTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(JsonOptions);
+        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.Equal(seeded.Id, task?.Id);
     }
 
@@ -74,9 +64,30 @@ public class TaskCrudTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(JsonOptions);
+        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.Equal("Updated title", task?.Title);
         Assert.Equal(KanbanStatus.InProgress, task?.Status);
+    }
+
+    [Fact(DisplayName = "Updating a task with past due date should return 400.")]
+    [Trait("Category", "Integration Web - Tasks")]
+    public async Task Task_Update_PastDueDate_ShouldReturn400()
+    {
+        // Arrange
+        var client = await _fixture.CreateAuthenticatedTasksClientAsync();
+        var created = await _fixture.CreateDemoTaskAsync();
+        var body = new UpdateTaskRequest(
+            created.Title,
+            created.Description,
+            created.Status,
+            created.Priority,
+            DateTimeOffset.UtcNow.AddDays(-1));
+
+        // Act
+        var response = await client.PutAsJsonAsync($"/api/tasks/{created.Id}", body);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact(DisplayName = "Updating terminal task status should return 400.")]
@@ -146,7 +157,7 @@ public class TaskCrudTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(JsonOptions);
+        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.Equal(KanbanStatus.Todo, task?.Status);
     }
 
@@ -220,13 +231,13 @@ public class TaskCrudTests
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(JsonOptions);
+        var task = await response.Content.ReadFromJsonAsync<TaskResponse>(IntegrationTestsFixture.JsonOptions);
         Assert.Equal(KanbanStatus.Todo, task?.Status);
     }
 
     private static async Task AssertErrorContainsAsync(HttpResponseMessage response, string fragment)
     {
-        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(JsonOptions);
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(IntegrationTestsFixture.JsonOptions);
         Assert.NotNull(body);
         Assert.True(body!.TryGetValue("error", out var error));
         Assert.Contains(fragment, error, StringComparison.OrdinalIgnoreCase);
