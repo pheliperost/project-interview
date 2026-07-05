@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,8 @@ import { Label } from '@/components/ui/label';
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const passwordReset = Boolean((location.state as { passwordReset?: boolean } | null)?.passwordReset);
   const [email, setEmail] = useState('demo@example.local');
-  const [password, setPassword] = useState(() => (passwordReset ? '' : 'Demo123!'));
+  const [password, setPassword] = useState('Demo123!');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
