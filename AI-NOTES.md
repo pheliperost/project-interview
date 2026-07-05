@@ -116,3 +116,9 @@ Log of meaningful AI-assisted sessions: what was suggested, what was accepted/re
 - **Phase 5:** `AppExceptionHandlerTests` (3), validator happy-path expansions (2).
 - **Fix:** `TaskRepository` date-range filters moved in-memory (SQLite cannot translate `DateTimeOffset` WHERE).
 - **Verified:** `dotnet test` (105 pass — 60 unit + 45 integration).
+
+## AutoMapper migration (2026-07-04)
+
+- **User request:** Replace manual `TaskMapper` with AutoMapper for LessonsManagement consistency and scaling.
+- **Changes:** Added AutoMapper 14.0.0; `TaskProfile` (`TaskItem` ↔ DTOs, `TaskFilterRequest` → `TaskQuery`, create mapping with context items); `TaskPagination` constants; `TaskService` injects `IMapper`; removed `TaskMapper.cs`; renamed tests to `TaskProfileTests`.
+- **Verified:** `dotnet test` (105 pass).

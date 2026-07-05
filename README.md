@@ -158,7 +158,7 @@ This project was scaffolded and implemented with AI assistance (Cursor). Below i
 
 The full agreed specification lives in [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md). Phase 1 aligned scope (user story, S1–S7, stack, API contract, seed users) before any code was written.
 
-**Prompt vs as-built:** The prompt targeted a single API host and AutoMapper. The final solution split Auth and Tasks APIs and used a manual mapper. See [docs/genai-prompt-vs-result.md](docs/genai-prompt-vs-result.md) for the full delta and reasons.
+**Prompt vs as-built:** The prompt targeted a single API host. The final solution split Auth and Tasks APIs; mapping uses AutoMapper profiles (aligned with LessonsManagement). See [docs/genai-prompt-vs-result.md](docs/genai-prompt-vs-result.md) for the full delta and reasons.
 
 ### Sample output
 

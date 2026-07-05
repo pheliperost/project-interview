@@ -16,14 +16,18 @@ public class TaskProfile : Profile
         CreateMap<TaskItem, TaskResponse>();
 
         CreateMap<TaskFilterRequest, TaskQuery>()
-            .ForMember(d => d.SearchTerm, opt => opt.MapFrom(s =>
-                string.IsNullOrWhiteSpace(s.Search) ? null : s.Search.Trim()))
-            .ForMember(d => d.Page, opt => opt.MapFrom(s =>
-                s.Page.HasValue && s.Page.Value > 0 ? s.Page.Value : TaskPagination.DefaultPage))
-            .ForMember(d => d.PageSize, opt => opt.MapFrom(s =>
+            .ConstructUsing(s => new TaskQuery(
+                string.IsNullOrWhiteSpace(s.Search) ? null : s.Search.Trim(),
+                s.Statuses,
+                s.CreatedFrom,
+                s.CreatedTo,
+                s.UpdatedFrom,
+                s.UpdatedTo,
+                s.Page.HasValue && s.Page.Value > 0 ? s.Page.Value : TaskPagination.DefaultPage,
                 s.PageSize.HasValue && s.PageSize.Value > 0
                     ? Math.Min(s.PageSize.Value, TaskPagination.MaxPageSize)
-                    : TaskPagination.DefaultPageSize));
+                    : TaskPagination.DefaultPageSize))
+            .ForAllMembers(opt => opt.Ignore());
 
         CreateMap<CreateTaskRequest, TaskItem>()
             .ForMember(d => d.Id, opt => opt.MapFrom(_ => Guid.NewGuid()))
