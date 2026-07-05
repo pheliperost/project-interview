@@ -8,8 +8,11 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
     public RegisterRequestValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
-        RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("Enter a valid email address (e.g. user@example.com).");
+
+        RuleFor(x => x.Password).ApplyPasswordPolicy();
     }
 }
 
@@ -34,9 +37,11 @@ public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequ
 {
     public ResetPasswordRequestValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
-        RuleFor(x => x.Token).NotEmpty();
-        RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(8);
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress().WithMessage("Enter a valid email address (e.g. user@example.com).");
+        RuleFor(x => x.Token).NotEmpty().WithMessage("Reset token is required.");
+        RuleFor(x => x.NewPassword).ApplyPasswordPolicy();
     }
 }
 

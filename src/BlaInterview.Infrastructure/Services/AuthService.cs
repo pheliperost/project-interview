@@ -154,7 +154,10 @@ public class AuthService : IAuthService
         var result = await validator.ValidateAsync(instance, cancellationToken);
         if (!result.IsValid)
         {
-            throw new AppException(string.Join(' ', result.Errors.Select(e => e.ErrorMessage)), 400);
+            throw new AppException(FormatValidationErrors(result), 400);
         }
     }
+
+    private static string FormatValidationErrors(FluentValidation.Results.ValidationResult result) =>
+        string.Join(" ", result.Errors.Select(e => e.ErrorMessage));
 }

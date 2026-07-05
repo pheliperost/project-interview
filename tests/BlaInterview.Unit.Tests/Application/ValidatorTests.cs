@@ -88,6 +88,25 @@ public class ValidatorTests
     {
         var result = _registerValidator.Validate(new RegisterRequest("user@example.local", "short"));
         Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("8 characters", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact(DisplayName = "Register validator should reject password missing uppercase.")]
+    [Trait("Category", "Validators")]
+    public void RegisterValidator_PasswordMissingUppercase_ShouldBeInvalid()
+    {
+        var result = _registerValidator.Validate(new RegisterRequest("user@example.local", "test1234!"));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("uppercase", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact(DisplayName = "Register validator should reject invalid email.")]
+    [Trait("Category", "Validators")]
+    public void RegisterValidator_InvalidEmail_ShouldBeInvalid()
+    {
+        var result = _registerValidator.Validate(new RegisterRequest("not-an-email", "Test1234!"));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage.Contains("valid email", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact(DisplayName = "Register validator should accept valid credentials.")]
