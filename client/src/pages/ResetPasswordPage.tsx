@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { api } from '@/api/client';
+import { api, clearAuth } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,8 +23,9 @@ export function ResetPasswordPage() {
     setLoading(true);
     try {
       const response = await api.resetPassword(email, token, password);
+      clearAuth();
       toast.success(response.message);
-      navigate('/login');
+      navigate('/login', { state: { passwordReset: true } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Reset failed');
     } finally {

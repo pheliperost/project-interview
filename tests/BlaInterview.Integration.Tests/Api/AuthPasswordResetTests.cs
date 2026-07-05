@@ -119,6 +119,60 @@ public class AuthPasswordResetTests
         Assert.Equal(HttpStatusCode.OK, newLogin.StatusCode);
     }
 
+    [Fact(DisplayName = "Password reset should clear lockout and allow login with new password.")]
+    [Trait("Category", "Integration Web - Auth")]
+    public async Task Auth_ResetPassword_AfterLockout_ShouldAllowLoginWithNewPassword()
+    {
+        // Arrange
+        var client = _fixture.AuthFactory.CreateClient();
+        var email = $"lockout-reset-{Guid.NewGuid():N}@example.local";
+        const string oldPassword = "OldPass1!";
+        const string newPassword = "NewPass2!";
+
+        var registerResponse = await client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequest(email, oldPassword));
+        registerResponse.EnsureSuccessStatusCode();
+
+        for (var i = 0; i < 6; i++)
+        {
+            var failedLogin = await client.PostAsJsonAsync(
+                "/api/auth/login",
+                new LoginRequest(email, "WrongPass1!"));
+            if (failedLogin.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                break;
+            }
+
+            Assert.Equal(HttpStatusCode.Unauthorized, failedLogin.StatusCode);
+        }
+
+        var lockedLogin = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, oldPassword));
+        Assert.Equal(HttpStatusCode.TooManyRequests, lockedLogin.StatusCode);
+
+        var forgotResponse = await client.PostAsJsonAsync(
+            "/api/auth/forgot-password",
+            new ForgotPasswordRequest(email));
+        forgotResponse.EnsureSuccessStatusCode();
+        var forgot = await forgotResponse.Content.ReadFromJsonAsync<ForgotPasswordResponse>(JsonOptions);
+        Assert.NotNull(forgot?.ResetLink);
+
+        var resetUri = new Uri(forgot.ResetLink);
+        var token = ParseQueryParam(resetUri, "token");
+        Assert.False(string.IsNullOrWhiteSpace(token));
+
+        // Act
+        var resetResponse = await client.PostAsJsonAsync(
+            "/api/auth/reset-password",
+            new ResetPasswordRequest(email, token!, newPassword));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, resetResponse.StatusCode);
+
+        var newLogin = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, newPassword));
+        Assert.Equal(HttpStatusCode.OK, newLogin.StatusCode);
+    }
+
     [Fact(DisplayName = "Reset password with invalid token should return 400.")]
     [Trait("Category", "Integration Web - Auth")]
     public async Task Auth_ResetPassword_InvalidToken_ShouldReturn400()

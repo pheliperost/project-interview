@@ -84,7 +84,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
-  if (token) {
+  const attachAuth = Boolean(token) && !isPublicAuthPath(path);
+  if (attachAuth) {
     if (!isTokenValid()) {
       clearAuth();
       notifyUnauthorized();

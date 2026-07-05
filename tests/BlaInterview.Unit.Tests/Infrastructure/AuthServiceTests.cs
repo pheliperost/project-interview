@@ -252,6 +252,57 @@ public class AuthServiceTests
         Assert.Contains("reset", response.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact(DisplayName = "Login when account is locked out should throw 429.")]
+    [Trait("Category", "Auth Service")]
+    public async Task AuthService_Login_LockedOut_ShouldThrow429()
+    {
+        // Arrange
+        var service = _fixtures.CreateService();
+        var request = new LoginRequest("user@example.local", "Pass123!");
+        var user = AuthServiceFixtures.CreateUser(request.Email);
+        _fixtures.UserManager
+            .Setup(m => m.FindByEmailAsync(request.Email))
+            .ReturnsAsync(user);
+        _fixtures.SignInManager
+            .Setup(m => m.CheckPasswordSignInAsync(user, request.Password, true))
+            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.LockedOut);
+
+        // Act
+        var exception = await Assert.ThrowsAsync<AppException>(() => service.LoginAsync(request));
+
+        // Assert
+        Assert.Equal(429, exception.StatusCode);
+    }
+
+    [Fact(DisplayName = "Reset password success should clear lockout counters.")]
+    [Trait("Category", "Auth Service")]
+    public async Task AuthService_ResetPassword_Success_ShouldClearLockout()
+    {
+        // Arrange
+        var service = _fixtures.CreateService();
+        var request = new ResetPasswordRequest("user@example.local", "token", "NewPass1!");
+        var user = AuthServiceFixtures.CreateUser(request.Email);
+        _fixtures.UserManager
+            .Setup(m => m.FindByEmailAsync(request.Email))
+            .ReturnsAsync(user);
+        _fixtures.UserManager
+            .Setup(m => m.ResetPasswordAsync(user, request.Token, request.NewPassword))
+            .ReturnsAsync(IdentityResult.Success);
+        _fixtures.UserManager
+            .Setup(m => m.ResetAccessFailedCountAsync(user))
+            .ReturnsAsync(IdentityResult.Success);
+        _fixtures.UserManager
+            .Setup(m => m.SetLockoutEndDateAsync(user, null))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        await service.ResetPasswordAsync(request);
+
+        // Assert
+        _fixtures.UserManager.Verify(m => m.ResetAccessFailedCountAsync(user), Times.Once);
+        _fixtures.UserManager.Verify(m => m.SetLockoutEndDateAsync(user, null), Times.Once);
+    }
+
     [Fact(DisplayName = "Reset password with invalid token should throw 400.")]
     [Trait("Category", "Auth Service")]
     public async Task AuthService_ResetPassword_InvalidToken_ShouldThrow400()

@@ -83,6 +83,13 @@ public class AuthService : IAuthService
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+        if (result.IsLockedOut)
+        {
+            throw new AppException(
+                "Account is temporarily locked after too many failed sign-in attempts. Wait a few minutes or reset your password.",
+                429);
+        }
+
         if (!result.Succeeded)
         {
             throw new AppException("Invalid email or password.", 401);
@@ -127,6 +134,9 @@ public class AuthService : IAuthService
         {
             throw new AppException(string.Join(' ', result.Errors.Select(e => e.Description)), 400);
         }
+
+        await _userManager.ResetAccessFailedCountAsync(user);
+        await _userManager.SetLockoutEndDateAsync(user, null);
 
         return new ResetPasswordResponse("Password has been reset. You can sign in with your new password.");
     }
