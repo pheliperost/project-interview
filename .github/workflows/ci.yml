@@ -35,6 +35,6 @@ jobs:
       - name: Install and verify client
         working-directory: client
         run: |
-          npm ci
+          npm install --no-audit --no-fund
           npm run verify
           npm run build
