@@ -104,12 +104,10 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
         aria-label="Close"
         onClick={onClose}
       />
-      <aside
-        role="dialog"
-        aria-modal="true"
+      <dialog
         aria-labelledby={titleId}
         className="task-editor-panel"
-        onClick={(e) => e.stopPropagation()}
+        open
       >
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
           <h2 id={titleId} className="text-base font-medium leading-none">
@@ -201,7 +199,7 @@ export function TaskEditor({ open, task, defaultStatus, onClose, onSave }: TaskE
             </Button>
           </footer>
         </form>
-      </aside>
+      </dialog>
     </div>,
     getOverlayRoot(),
   );
