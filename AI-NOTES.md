@@ -4,6 +4,12 @@ Log of meaningful AI-assisted sessions: what was suggested, what was accepted/re
 
 ---
 
+## README restructure (2026-07-05)
+
+- **User request:** Improve README for interview review — own voice, not cloned from other submissions.
+- **Added:** At a glance, API flow diagram, key design decisions, API reference tables, GenAI prompt excerpt, demo flow (~5 min), documentation map.
+- **Trimmed:** Verbose test filter/coverage blocks; consolidated run instructions.
+
 ## GenAI documentation — prompt vs result (2026-07-04)
 
 - **User request:** Close GenAI exercise gap — PDF asks for prompt, sample code, validation, and corrections narrative.

@@ -11,7 +11,7 @@ export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 export interface Task {
   id: string;
   title: string;
-  description?: string;
+  description: string;
   status: KanbanStatus;
   priority: TaskPriority;
   dueDate?: string;

@@ -189,7 +189,7 @@ public class TaskCrudTests
         var client = await _fixture.CreateAuthenticatedTasksClientAsync();
         var body = new CreateTaskRequest(
             "Past due task",
-            null,
+            "A description",
             TaskPriority.Medium,
             DateTimeOffset.UtcNow.AddDays(-1));
 

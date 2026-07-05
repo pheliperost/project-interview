@@ -52,7 +52,7 @@ public class TaskServiceFixtures : IDisposable
     {
         return new CreateTaskRequest(
             "Past due task",
-            null,
+            "A description",
             TaskPriority.Medium,
             DateTimeOffset.UtcNow.AddDays(-1));
     }

@@ -26,7 +26,7 @@ interface TaskDialogProps {
   onClose: () => void;
   onSave: (data: {
     title: string;
-    description?: string;
+    description: string;
     priority: TaskPriority;
     dueDate?: string;
     status?: KanbanStatus;
@@ -55,7 +55,7 @@ export function TaskDialog({ open, task, defaultStatus, onClose, onSave }: TaskD
     try {
       await onSave({
         title,
-        description: description || undefined,
+        description,
         priority,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         status: task?.status ?? defaultStatus,
@@ -82,6 +82,7 @@ export function TaskDialog({ open, task, defaultStatus, onClose, onSave }: TaskD
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
+                required
                 maxLength={2000}
                 rows={3}
                 value={description}

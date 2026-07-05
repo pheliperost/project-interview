@@ -174,7 +174,7 @@ export const api = {
 
   createTask: (body: {
     title: string;
-    description?: string;
+    description: string;
     priority?: string;
     dueDate?: string;
   }) =>
@@ -184,7 +184,7 @@ export const api = {
     id: string,
     body: {
       title: string;
-      description?: string;
+      description: string;
       status: KanbanStatus;
       priority: string;
       dueDate?: string | null;

@@ -33,8 +33,16 @@ public class ValidatorTests
     [Trait("Category", "Validators")]
     public void CreateTaskValidator_NullDueDate_ShouldBeValid()
     {
-        var result = _createValidator.Validate(new CreateTaskRequest("Title", null, TaskPriority.Medium, null));
+        var result = _createValidator.Validate(new CreateTaskRequest("Title", "A description", TaskPriority.Medium, null));
         Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Create task validator should reject empty description.")]
+    [Trait("Category", "Validators")]
+    public void CreateTaskValidator_EmptyDescription_ShouldBeInvalid()
+    {
+        var result = _createValidator.Validate(new CreateTaskRequest("Title", "", TaskPriority.Medium, null));
+        Assert.False(result.IsValid);
     }
 
     [Fact(DisplayName = "Update task validator should reject past due date.")]
