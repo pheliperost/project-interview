@@ -5,5 +5,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- AutoMapper 14 pinned; upgrade tracked separately -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
 </Project>

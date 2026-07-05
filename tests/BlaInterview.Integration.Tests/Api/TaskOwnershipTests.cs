@@ -95,7 +95,9 @@ public class TaskOwnershipTests
         var list = await listResponse.Content.ReadFromJsonAsync<TaskListResponse>(IntegrationTestsFixture.JsonOptions);
         var completedTask = list?.Items.FirstOrDefault(t => t.Title.StartsWith("[Other]", StringComparison.Ordinal));
         if (completedTask is null)
+        {
             throw new InvalidOperationException("Seeded other-user completed task not found.");
+        }
 
         var demoClient = await _fixture.CreateAuthenticatedTasksClientAsync();
 

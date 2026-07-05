@@ -17,7 +17,9 @@ public abstract class BaseService
     protected void Notify(ValidationResult validationResult)
     {
         foreach (var error in validationResult.Errors)
+        {
             Notify(error.ErrorMessage);
+        }
     }
 
     protected void Notify(string message, int statusCode = 400)
@@ -32,7 +34,9 @@ public abstract class BaseService
     {
         var result = await validator.ValidateAsync(instance, cancellationToken);
         if (result.IsValid)
+        {
             return true;
+        }
 
         Notify(result);
         return false;

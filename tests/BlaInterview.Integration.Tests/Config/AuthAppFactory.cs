@@ -25,7 +25,9 @@ public static class IntegrationTestConfiguration
         foreach (var (key, value) in ForDatabase(databasePath))
         {
             if (value is not null)
+            {
                 builder.UseSetting(key, value);
+            }
         }
 
         builder.ConfigureAppConfiguration((_, config) =>

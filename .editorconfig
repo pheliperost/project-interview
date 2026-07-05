@@ -39,7 +39,23 @@ dotnet_naming_style.begins_with_i.capitalization = pascal_case
 # Analyzer severities
 dotnet_analyzer_diagnostic.category-security.severity = warning
 dotnet_analyzer_diagnostic.category-reliability.severity = warning
-dotnet_code_quality.CA1848.severity = none
+dotnet_diagnostic.CA1848.severity = none
+dotnet_diagnostic.CA1873.severity = none
+
+[**/Program.cs]
+dotnet_diagnostic.CA1050.severity = none
+
+[src/BlaInterview.Api.Shared/**.cs]
+dotnet_diagnostic.CA1716.severity = none
+
+[**/Migrations/**.cs]
+dotnet_diagnostic.IDE0161.severity = none
+
+[tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1711.severity = none
+dotnet_diagnostic.CA1822.severity = none
+dotnet_diagnostic.CA1816.severity = none
 
 [*.{json,yml,yaml}]
 indent_size = 2

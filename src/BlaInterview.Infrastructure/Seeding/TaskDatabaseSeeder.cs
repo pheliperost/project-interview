@@ -29,13 +29,19 @@ public static class TaskDatabaseSeeder
         var seeded = 0;
 
         if (!await context.Tasks.AnyAsync(t => t.UserId == demo.Id))
+        {
             seeded += await SeedDemoUserTasksAsync(context, demo.Id);
+        }
 
         if (!await context.Tasks.AnyAsync(t => t.UserId == other.Id))
+        {
             seeded += await SeedOtherUserTasksAsync(context, other.Id);
+        }
 
         if (seeded > 0)
+        {
             logger.LogInformation("Database seeded with {Count} tasks.", seeded);
+        }
     }
 
     private static async Task<int> SeedDemoUserTasksAsync(AppDbContext context, string userId)

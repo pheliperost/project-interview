@@ -18,7 +18,9 @@ public static class JwtAuthenticationExtensions
             ?? throw new InvalidOperationException("Jwt settings are missing.");
 
         if (jwt.Secret.Length < 32)
+        {
             throw new InvalidOperationException("Jwt:Secret must be at least 32 characters.");
+        }
 
         services.AddAuthentication(options =>
             {

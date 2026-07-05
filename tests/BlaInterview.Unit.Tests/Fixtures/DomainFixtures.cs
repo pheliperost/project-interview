@@ -32,7 +32,9 @@ public static class DomainFixtures
     {
         var terminalStatus = status ?? KanbanStatus.Completed;
         if (terminalStatus is not (KanbanStatus.Completed or KanbanStatus.Cancelled))
+        {
             terminalStatus = KanbanStatus.Completed;
+        }
 
         var task = GenerateValidTaskItem(userId, terminalStatus);
         task.Status = terminalStatus;

@@ -41,7 +41,9 @@ public class TaskProfile : Profile
                 dest.UserId = context.Items[UserIdContextKey] as string
                     ?? throw new InvalidOperationException($"{UserIdContextKey} is required.");
                 if (context.Items[NowContextKey] is not DateTimeOffset now)
+                {
                     throw new InvalidOperationException($"{NowContextKey} is required.");
+                }
                 dest.CreatedAt = now;
                 dest.UpdatedAt = now;
             });

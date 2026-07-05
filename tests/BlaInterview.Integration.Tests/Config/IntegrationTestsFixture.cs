@@ -63,7 +63,9 @@ public class IntegrationTestsFixture : IDisposable
 
         var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions);
         if (string.IsNullOrWhiteSpace(auth?.Token))
+        {
             throw new InvalidOperationException("Login did not return a JWT.");
+        }
 
         var tasksClient = TasksFactory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
         tasksClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.Token);
@@ -79,7 +81,9 @@ public class IntegrationTestsFixture : IDisposable
         var list = await response.Content.ReadFromJsonAsync<TaskListResponse>(JsonOptions);
         var task = list?.Items.FirstOrDefault(t => t.Title.StartsWith("[Other]", StringComparison.Ordinal));
         if (task is null)
+        {
             throw new InvalidOperationException("Seeded other-user task not found.");
+        }
 
         return task.Id;
     }
@@ -97,7 +101,9 @@ public class IntegrationTestsFixture : IDisposable
             && (!status.HasValue || t.Status == status.Value));
 
         if (task is null)
+        {
             throw new InvalidOperationException("Demo task matching criteria not found.");
+        }
 
         return task;
     }
@@ -115,5 +121,6 @@ public class IntegrationTestsFixture : IDisposable
     {
         AuthFactory.Dispose();
         TasksFactory.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

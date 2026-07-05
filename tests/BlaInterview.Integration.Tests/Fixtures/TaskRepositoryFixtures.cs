@@ -109,5 +109,6 @@ public class TaskRepositoryFixtures : IDisposable
     {
         Context.Dispose();
         _connection.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

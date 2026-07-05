@@ -52,7 +52,9 @@ public class AuthService : IAuthService
 
         var existing = await _userManager.FindByEmailAsync(request.Email);
         if (existing is not null)
+        {
             throw new AppException("Email is already registered.", 409);
+        }
 
         var user = new ApplicationUser
         {
@@ -63,7 +65,9 @@ public class AuthService : IAuthService
 
         var result = await _userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
+        {
             throw new AppException(string.Join(' ', result.Errors.Select(e => e.Description)), 400);
+        }
 
         return _jwtTokenService.CreateToken(user.Id, user.Email!);
     }
@@ -74,11 +78,15 @@ public class AuthService : IAuthService
 
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is null)
+        {
             throw new AppException("Invalid email or password.", 401);
+        }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
         if (!result.Succeeded)
+        {
             throw new AppException("Invalid email or password.", 401);
+        }
 
         return _jwtTokenService.CreateToken(user.Id, user.Email!);
     }
@@ -91,7 +99,9 @@ public class AuthService : IAuthService
 
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is null)
+        {
             return new ForgotPasswordResponse(ForgotPasswordMessage, ResetLink: null);
+        }
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var resetLink = BuildResetLink(user.Email!, token);
@@ -108,11 +118,15 @@ public class AuthService : IAuthService
 
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is null)
+        {
             throw new AppException("Invalid or expired reset token.", 400);
+        }
 
         var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
         if (!result.Succeeded)
+        {
             throw new AppException(string.Join(' ', result.Errors.Select(e => e.Description)), 400);
+        }
 
         return new ResetPasswordResponse("Password has been reset. You can sign in with your new password.");
     }
@@ -129,6 +143,8 @@ public class AuthService : IAuthService
     {
         var result = await validator.ValidateAsync(instance, cancellationToken);
         if (!result.IsValid)
+        {
             throw new AppException(string.Join(' ', result.Errors.Select(e => e.ErrorMessage)), 400);
+        }
     }
 }

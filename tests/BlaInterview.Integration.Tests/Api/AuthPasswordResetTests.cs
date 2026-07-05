@@ -160,13 +160,17 @@ public class AuthPasswordResetTests
     {
         var query = uri.Query.TrimStart('?');
         if (string.IsNullOrEmpty(query))
+        {
             return null;
+        }
 
         foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
         {
             var pair = part.Split('=', 2);
             if (pair.Length == 2 && pair[0] == name)
+            {
                 return Uri.UnescapeDataString(pair[1]);
+            }
         }
 
         return null;

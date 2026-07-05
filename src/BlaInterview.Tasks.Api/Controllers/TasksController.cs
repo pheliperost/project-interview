@@ -30,7 +30,9 @@ public class TasksController : BaseController
             new GetTasksRequest(UserId, query.ToFilterRequest()),
             cancellationToken);
         if (!ValidOperation())
+        {
             return NotificationError();
+        }
 
         return Ok(result);
     }
@@ -40,7 +42,9 @@ public class TasksController : BaseController
     {
         var result = await _taskService.GetTaskByIdAsync(new GetTaskByIdRequest(UserId, id), cancellationToken);
         if (!ValidOperation())
+        {
             return NotificationError();
+        }
 
         return Ok(result);
     }
@@ -50,7 +54,9 @@ public class TasksController : BaseController
     {
         var task = await _taskService.CreateTaskAsync(new CreateTaskRequest(UserId, body), cancellationToken);
         if (!ValidOperation())
+        {
             return NotificationError();
+        }
 
         return CreatedAtAction(nameof(GetTask), new { id = task!.Id }, task);
     }
@@ -60,7 +66,9 @@ public class TasksController : BaseController
     {
         var result = await _taskService.UpdateTaskAsync(new UpdateTaskRequest(UserId, id, body), cancellationToken);
         if (!ValidOperation())
+        {
             return NotificationError();
+        }
 
         return Ok(result);
     }
@@ -70,7 +78,9 @@ public class TasksController : BaseController
     {
         await _taskService.DeleteTaskAsync(new DeleteTaskRequest(UserId, id), cancellationToken);
         if (!ValidOperation())
+        {
             return NotificationError();
+        }
 
         return NoContent();
     }
@@ -80,7 +90,9 @@ public class TasksController : BaseController
     {
         var result = await _taskService.ReactivateAsync(new ReactivateTaskRequest(UserId, id), cancellationToken);
         if (!ValidOperation())
+        {
             return NotificationError();
+        }
 
         return Ok(result);
     }

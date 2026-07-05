@@ -19,30 +19,39 @@ public class TaskRepository : ITaskRepository
     {
         var dbQuery = _context.Tasks.AsNoTracking().Where(t => t.UserId == userId);
 
-        if (query.SearchTerm is not null)
-        {
-            var term = query.SearchTerm.ToLower();
-            dbQuery = dbQuery.Where(t => t.Title.ToLower().Contains(term));
-        }
-
         if (query.Statuses is { Count: > 0 })
+        {
             dbQuery = dbQuery.Where(t => query.Statuses.Contains(t.Status));
+        }
 
         var tasks = await dbQuery.ToListAsync(cancellationToken);
 
         IEnumerable<TaskItem> filtered = tasks;
 
+        if (query.SearchTerm is not null)
+        {
+            filtered = filtered.Where(t => t.Title.Contains(query.SearchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
         if (query.CreatedFrom.HasValue)
+        {
             filtered = filtered.Where(t => t.CreatedAt >= query.CreatedFrom.Value);
+        }
 
         if (query.CreatedTo.HasValue)
+        {
             filtered = filtered.Where(t => t.CreatedAt <= query.CreatedTo.Value);
+        }
 
         if (query.UpdatedFrom.HasValue)
+        {
             filtered = filtered.Where(t => t.UpdatedAt >= query.UpdatedFrom.Value);
+        }
 
         if (query.UpdatedTo.HasValue)
+        {
             filtered = filtered.Where(t => t.UpdatedAt <= query.UpdatedTo.Value);
+        }
 
         var sorted = filtered
             .OrderBy(t => t.DueDate ?? DateTimeOffset.MaxValue)

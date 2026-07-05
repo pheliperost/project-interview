@@ -25,7 +25,9 @@ public class AppExceptionHandler : IExceptionHandler
         };
 
         if (statusCode >= StatusCodes.Status500InternalServerError)
+        {
             _logger.LogError(exception, "Unhandled exception");
+        }
 
         httpContext.Response.StatusCode = statusCode;
         await httpContext.Response.WriteAsJsonAsync(new { error = message }, cancellationToken);

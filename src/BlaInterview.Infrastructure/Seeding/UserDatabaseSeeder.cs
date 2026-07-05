@@ -33,12 +33,16 @@ public static class UserDatabaseSeeder
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user is not null)
+        {
             return user;
+        }
 
         user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
         var result = await userManager.CreateAsync(user, password);
         if (!result.Succeeded)
+        {
             throw new InvalidOperationException(string.Join(' ', result.Errors.Select(e => e.Description)));
+        }
 
         return user;
     }

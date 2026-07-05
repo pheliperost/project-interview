@@ -35,7 +35,9 @@ public class TaskService : BaseService, ITaskService
     public async Task<TaskListResponse?> GetTasksAsync(GetTasksRequest request, CancellationToken cancellationToken = default)
     {
         if (!await ValidateAsync(_filterValidator, request.Filter, cancellationToken))
+        {
             return null;
+        }
 
         var query = _mapper.Map<TaskQuery>(request.Filter);
         var page = await _repository.GetByUserAsync(request.UserId, query, cancellationToken);
@@ -50,7 +52,9 @@ public class TaskService : BaseService, ITaskService
     {
         var task = await GetOwnedTaskAsync(request.UserId, request.TaskId, cancellationToken);
         if (task is null)
+        {
             return null;
+        }
 
         return _mapper.Map<TaskResponse>(task);
     }
@@ -58,7 +62,9 @@ public class TaskService : BaseService, ITaskService
     public async Task<TaskResponse?> CreateTaskAsync(CreateTaskRequest request, CancellationToken cancellationToken = default)
     {
         if (!await ValidateAsync(_createValidator, request.Body, cancellationToken))
+        {
             return null;
+        }
 
         var now = DateTimeOffset.UtcNow;
         var task = _mapper.Map<Domain.Entities.TaskItem>(request.Body, opt =>
@@ -74,11 +80,15 @@ public class TaskService : BaseService, ITaskService
     public async Task<TaskResponse?> UpdateTaskAsync(UpdateTaskRequest request, CancellationToken cancellationToken = default)
     {
         if (!await ValidateAsync(_updateValidator, request.Body, cancellationToken))
+        {
             return null;
+        }
 
         var task = await GetOwnedTaskAsync(request.UserId, request.TaskId, cancellationToken);
         if (task is null)
+        {
             return null;
+        }
 
         if (task.IsTerminal && request.Body.Status != task.Status)
         {
@@ -108,7 +118,9 @@ public class TaskService : BaseService, ITaskService
     {
         var task = await GetOwnedTaskAsync(request.UserId, request.TaskId, cancellationToken);
         if (task is null)
+        {
             return;
+        }
 
         await _repository.DeleteAsync(task, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
@@ -118,7 +130,9 @@ public class TaskService : BaseService, ITaskService
     {
         var task = await GetOwnedTaskAsync(request.UserId, request.TaskId, cancellationToken);
         if (task is null)
+        {
             return null;
+        }
 
         if (!task.IsTerminal)
         {
@@ -154,7 +168,9 @@ public class TaskService : BaseService, ITaskService
     private static bool IsDueDateChangedToPast(DateTimeOffset? current, DateTimeOffset? requested)
     {
         if (requested is null || DueDatesEqual(current, requested))
+        {
             return false;
+        }
 
         return requested.Value.UtcDateTime.Date < DateTimeOffset.UtcNow.Date;
     }
@@ -162,9 +178,14 @@ public class TaskService : BaseService, ITaskService
     private static bool DueDatesEqual(DateTimeOffset? left, DateTimeOffset? right)
     {
         if (left is null && right is null)
+        {
             return true;
+        }
+
         if (left is null || right is null)
+        {
             return false;
+        }
 
         return left.Value.UtcDateTime.Date == right.Value.UtcDateTime.Date;
     }
