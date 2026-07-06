@@ -2,13 +2,13 @@
 
 ## Overview
 
-Full-stack submission for the .NET technical interview exercise (PDF v6): a **personal Kanban task board** where each user manages their own tasks — scope is defined by the [user story](#user-story) and S1–S7 below, not by a feature checklist here.
+Full-stack submission for the BLA .NET technical interview (exercise v6): a personal Kanban board where each user manages only their own tasks. Scope comes from the [user story](#user-story) and S1–S7 below, not from a feature checklist.
 
 | | |
 |---|---|
 | **Stack** | .NET 10, ASP.NET Web API (Clean Architecture), SQLite, EF Core, Identity + JWT, FluentValidation, React 19, Vite, TanStack Query, xUnit |
 | **APIs** | Auth `:5098` (register, login, JWT) · Tasks `:5099` (CRUD, filters, reactivate) |
-| **Tests** | **159** (95 unit + 64 integration); expanded after GenAI scaffold |
+| **Tests** | **159** (95 unit + 64 integration) |
 | **GenAI** | [Prompt](docs/genai-scaffold-prompt.md) · [sample output](#sample-output) · [validation](#validation-and-corrections) · [AI-NOTES](AI-NOTES.md) |
 | **Demo** | [Run locally](#run-locally) · [Demo flow](#demo-flow) (~5 min) |
 
@@ -51,7 +51,7 @@ Auth API owns users (Identity). Tasks API validates the same JWT but never issue
 
 ## Key design decisions
 
-Choices worth explaining in the presentation. Exercise requirements (CRUD, auth, per-user data, tests) are covered by the [user story](#user-story), [API reference](#api-reference), and Overview — this table is for **how** the solution is structured and **what** extends the minimal task-CRUD scope.
+Structural choices for the interview presentation; CRUD, auth, and per-user data are covered elsewhere in this README.
 
 | Area | Topic | Choice | Rationale |
 |------|-------|--------|-----------|
