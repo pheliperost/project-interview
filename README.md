@@ -1,24 +1,18 @@
 # Simple Tasks — Technical Interview
 
-Personal Kanban task board built with **Clean Architecture** (.NET) and **React 19**.
+## Overview
 
-## How this maps to the BLA exercise (PDF v6)
+Full-stack submission for the .NET technical interview exercise (PDF v6): a **personal Kanban task board** where each user manages their own tasks — scope is defined by the [user story](#user-story) and S1–S7 below, not by a feature checklist here.
 
-- **User story & demo** — informal narrative below + [presentation outline](docs/interview-walkthrough.md)
-- **Two APIs** — Auth (`:5098`) issues JWT; Tasks (`:5099`) CRUD + ownership (**403**)
-- **Clean Architecture** — Domain → Application (rules/validation) → Infrastructure (EF) → API hosts
-- **Tests** — **154** (91 unit + 63 integration); expanded after GenAI scaffold, not full TDD on every story
-- **GenAI deliverables** — [prompt](docs/genai-scaffold-prompt.md), [sample output](#sample-output), [validation & fixes](#validation-and-corrections)
-- **Beyond PDF minimum** — six-column Kanban, search/filters, reactivate; password reset is demo-only (no email)
+| | |
+|---|---|
+| **Stack** | .NET 10 Web API (Clean Architecture), React 19, SQLite, Identity + JWT |
+| **APIs** | Auth `:5098` (register, login, JWT) · Tasks `:5099` (CRUD, filters, reactivate) |
+| **Tests** | **154** (91 unit + 63 integration); expanded after GenAI scaffold |
+| **GenAI** | [Prompt](docs/genai-scaffold-prompt.md) · [sample output](#sample-output) · [validation](#validation-and-corrections) · [AI-NOTES](AI-NOTES.md) |
+| **Presentation** | [Suggested outline](docs/interview-walkthrough.md) — story, demo, architecture |
 
-> **Presentation outline:** [docs/interview-walkthrough.md](docs/interview-walkthrough.md)
-
-## At a glance
-
-- **Product:** Six-column Kanban — drag-and-drop, priorities, due dates, search/filters, terminal Done/Canceled with reactivate
-- **Backend:** Segregated **Auth API** (`:5098`) and **Tasks API** (`:5099`) sharing one SQLite database
-- **Quality:** **154 tests** (91 unit + 63 integration), FluentValidation, ASP.NET Core Identity + JWT
-- **GenAI:** Scope aligned before coding — [prompt](docs/genai-scaffold-prompt.md), [prompt vs result](docs/genai-prompt-vs-result.md), [session log](AI-NOTES.md)
+**Exercise alignment:** two segregated APIs, data + business layers separate from controllers, CRUD with auth, frontend integration, seeded demo users, README setup — plus Kanban workflow, filters, and demo-only password reset beyond the minimal GenAI task-CRUD example.
 
 ## User story
 
@@ -259,10 +253,6 @@ Full API contract and domain rules: [docs/genai-scaffold-prompt.md](docs/genai-s
 - Other: SQLite `DateTimeOffset` sort in memory; `KanbanStatus` rename; Auth/Tasks split
 
 Session log: [AI-NOTES.md](AI-NOTES.md).
-
-## Presentation outline
-
-Suggested demo flow for the interview panel (~5–10 min): [docs/interview-walkthrough.md](docs/interview-walkthrough.md) — user story, live demo, architecture, and GenAI deliverables (aligned with the BLA exercise PDF).
 
 ## Documentation map
 
