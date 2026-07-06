@@ -2,7 +2,7 @@
 
 ## Overview
 
-Full-stack submission for the BLA .NET technical interview (exercise v6): a personal Kanban board where each user manages only their own tasks. Scope comes from the [user story](#user-story) and S1–S7 below, not from a feature checklist.
+A personal Kanban board built with .NET and React for a technical interview exercise. Each user manages only their own tasks. Scope follows the [user story](#user-story) and S1–S7 below.
 
 | | |
 |---|---|
@@ -51,23 +51,15 @@ Auth API owns users (Identity). Tasks API validates the same JWT but never issue
 
 ## Key design decisions
 
-Structural choices for the interview presentation; CRUD, auth, and per-user data are covered elsewhere in this README.
+Main structural choices. CRUD, auth, and per-user isolation are in the [user story](#user-story) and [API reference](#api-reference).
 
 | Area | Topic | Choice | Rationale |
 |------|-------|--------|-----------|
 | Architecture | Layering | Clean Architecture | Domain entities; `TaskService` + FluentValidation in Application; EF/repos in Infrastructure; thin controllers |
+| APIs | Segregation | Auth :5098 + Tasks :5099 | Interview spec: auth issues JWT, Tasks validates it; shared SQLite |
 | Data | Persistence | SQLite + EF Core | Single shared DB for both APIs in demo; migrations for reproducible seed |
-| Frontend | Client | React SPA + Web API | PDF mentions MVC; SPA fits Kanban UX and full-stack CRUD integration |
-| Product | Kanban workflow | Terminal Done/Canceled | Drag into terminal columns; `POST /api/tasks/{id}/reactivate` to reopen — beyond flat task CRUD |
-
-## Solution layout
-
-```
-src/           # Domain, Application, Infrastructure, Api.Shared, Auth.Api, Tasks.Api
-tests/         # BlaInterview.Unit.Tests + BlaInterview.Integration.Tests
-client/        # React frontend
-docs/          # user stories, GenAI prompt, troubleshooting — see [Documentation map](#documentation-map)
-```
+| Frontend | Client | React SPA + Web API | Kanban UX; presentation layer separate from API |
+| Product | Kanban workflow | Terminal Done/Canceled | Drag into terminal columns; `POST /api/tasks/{id}/reactivate` to reopen (beyond flat task CRUD) |
 
 ## Prerequisites
 
