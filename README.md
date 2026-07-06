@@ -4,14 +4,14 @@ Personal Kanban task board built with **Clean Architecture** (.NET) and **React 
 
 ## How this maps to the BLA exercise (PDF v6)
 
-- **User story & demo** — informal narrative below + [live script](docs/interview-walkthrough.md)
+- **User story & demo** — informal narrative below + [presentation outline](docs/interview-walkthrough.md)
 - **Two APIs** — Auth (`:5098`) issues JWT; Tasks (`:5099`) CRUD + ownership (**403**)
 - **Clean Architecture** — Domain → Application (rules/validation) → Infrastructure (EF) → API hosts
 - **Tests** — **154** (91 unit + 63 integration); expanded after GenAI scaffold, not full TDD on every story
 - **GenAI deliverables** — [prompt](docs/genai-scaffold-prompt.md), [sample output](#sample-output), [validation & fixes](#validation-and-corrections)
 - **Beyond PDF minimum** — six-column Kanban, search/filters, reactivate; password reset is demo-only (no email)
 
-> **Interview demo:** [docs/interview-walkthrough.md](docs/interview-walkthrough.md)
+> **Presentation outline:** [docs/interview-walkthrough.md](docs/interview-walkthrough.md)
 
 ## At a glance
 
@@ -260,25 +260,16 @@ Full API contract and domain rules: [docs/genai-scaffold-prompt.md](docs/genai-s
 
 Session log: [AI-NOTES.md](AI-NOTES.md).
 
-## Demo flow (~5 min)
+## Presentation outline
 
-Full script: [docs/interview-walkthrough.md](docs/interview-walkthrough.md).
-
-1. **Product** — personal Kanban, six columns, one user per board
-2. **Login** — pre-filled demo user → eight cards across columns
-3. **Kanban** — drag between active columns; drop into Done; **Move to To Do** (reactivate)
-4. **CRUD** — create/edit/delete from card menu; sidebar filters (search, status, dates)
-5. **API** — Swagger on Auth: login → copy token → Authorize → Tasks `GET /api/tasks`
-6. **Isolation** — mention 403 when accessing another user's task (test or Swagger)
-7. **Architecture** — Clean Architecture layers + why Auth and Tasks are separate hosts
-8. **GenAI** — prompt-first scope, then test-driven fixes to AI output
+Suggested demo flow for the interview panel (~5–10 min): [docs/interview-walkthrough.md](docs/interview-walkthrough.md) — user story, live demo, architecture, and GenAI deliverables (aligned with the BLA exercise PDF).
 
 ## Documentation map
 
 | Document | Purpose |
 |----------|---------|
 | [README.md](README.md) | Setup, API overview, design decisions |
-| [docs/interview-walkthrough.md](docs/interview-walkthrough.md) | Live demo script |
+| [docs/interview-walkthrough.md](docs/interview-walkthrough.md) | Presentation outline (demo + architecture) |
 | [docs/user-stories.md](docs/user-stories.md) | S1–S7 acceptance criteria |
 | [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md) | Full GenAI prompt |
 | [docs/genai-prompt-vs-result.md](docs/genai-prompt-vs-result.md) | Prompt vs as-built delta |

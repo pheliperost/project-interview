@@ -3,7 +3,7 @@
 **App name:** Simple Tasks  
 **UI:** React 19 + Vite + TypeScript + **shadcn/ui** + TanStack Query
 
-> **See also:** [README](../README.md) (setup & demo) · [GenAI prompt](genai-scaffold-prompt.md) · [Demo script](interview-walkthrough.md) · [Session log](../AI-NOTES.md)
+> **See also:** [README](../README.md) (setup & demo) · [GenAI prompt](genai-scaffold-prompt.md) · [Presentation outline](interview-walkthrough.md) · [Session log](../AI-NOTES.md)
 
 ## Product narrative
 

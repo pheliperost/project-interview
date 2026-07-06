@@ -64,7 +64,7 @@ npm run dev
 | [docs/user-stories.md](docs/user-stories.md) | S1–S7 user stories + acceptance criteria |
 | [AI-NOTES.md](AI-NOTES.md) | Chronological log of AI sessions, fixes, verification |
 | [README.md](README.md) | Human-facing setup, demo users, GenAI workflow summary |
-| [docs/interview-walkthrough.md](docs/interview-walkthrough.md) | Live demo script |
+| [docs/interview-walkthrough.md](docs/interview-walkthrough.md) | Presentation outline for the interview demo |
 | [docs/genai-prompt-vs-result.md](docs/genai-prompt-vs-result.md) | Prompt vs as-built delta |
 
 ---
@@ -264,7 +264,7 @@ Login page pre-fills demo credentials (`client/src/pages/LoginPage.tsx`).
 - Richer domain behavior on `TaskItem` (discuss with team)
 - TaskCard / board visual polish (partial — urgency badges, skeletons, empty columns done)
 - More unit or E2E tests
-- Interview demo walkthrough script → [docs/interview-walkthrough.md](docs/interview-walkthrough.md)
+- Interview presentation outline → [docs/interview-walkthrough.md](docs/interview-walkthrough.md)
 - CI pipeline → **`.github/workflows/ci.yml`**
 
 ---

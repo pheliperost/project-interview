@@ -506,4 +506,4 @@ Maintain [AI-NOTES.md](../AI-NOTES.md) after each meaningful session.
 
 ---
 
-**See also:** [Prompt vs result](genai-prompt-vs-result.md) · [Interview walkthrough](interview-walkthrough.md) · [Agent handoff](../AGENT-HANDOFF.md)
+**See also:** [Prompt vs result](genai-prompt-vs-result.md) · [Presentation outline](interview-walkthrough.md) · [Agent handoff](../AGENT-HANDOFF.md)
