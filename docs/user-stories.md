@@ -3,7 +3,7 @@
 **App name:** Simple Tasks  
 **UI:** React 19 + Vite + TypeScript + **shadcn/ui** + TanStack Query
 
-> **See also:** [README](../README.md) (setup & demo) · [GenAI prompt](genai-scaffold-prompt.md) · [Presentation outline](interview-walkthrough.md) · [Session log](../AI-NOTES.md)
+> **See also:** [README](../README.md) (setup & [demo flow](../README.md#demo-flow)) · [GenAI prompt](genai-scaffold-prompt.md) · [AI workflow preview](../AI-NOTES.md)
 
 ## Product narrative
 
@@ -173,4 +173,4 @@ As a professional managing my own work, I want a secure personal Kanban board wh
 
 ---
 
-**See also:** [README](../README.md) · [GenAI prompt](genai-scaffold-prompt.md) · [Prompt vs result](genai-prompt-vs-result.md) · [AI-NOTES](../AI-NOTES.md)
+**See also:** [README](../README.md) · [GenAI prompt](genai-scaffold-prompt.md) · [AI-NOTES](../AI-NOTES.md)

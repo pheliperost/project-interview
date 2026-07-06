@@ -1,9 +1,11 @@
 # Technical Interview — Agreed Scaffold Prompt
 
-> Saved during Phase 1 alignment. Use this prompt to generate the API scaffold and full implementation.
+> **Interview reminder:** This file is the **final consolidated prompt** from Phase 1 — the result of iterating with AI (user story, S1–S7, JWT, filters, terminal columns, etc.) until you approved and saved it (*"OK, save prompt"*). It is **not** the first raw chat; workflow summary → [AI-NOTES](../AI-NOTES.md). Implementation (Phase 2) started from here; what diverged afterward (two APIs, JWT/enum fixes, etc.) is in [README — Validation and corrections](../README.md#validation-and-corrections).
+>
+> Saved during Phase 1 alignment. Use this document as the prompt you would paste into a GenAI tool to generate the scaffold.
 > **Do not use external identity providers (Clerk, Auth0, etc.).**
 >
-> **See also:** [User stories](user-stories.md) · [Prompt vs result](genai-prompt-vs-result.md) · [README](../README.md) · [AI-NOTES](../AI-NOTES.md)
+> **See also:** [User stories](user-stories.md) · [README GenAI workflow](../README.md#validation-and-corrections) · [README](../README.md) · [AI-NOTES](../AI-NOTES.md)
 
 ---
 
@@ -502,8 +504,8 @@ Two users with **distinct demo scenarios** — credentials documented in README.
 4. **Corrections** — at least 2–3 real things AI got wrong and what changed
 5. **Edge cases** — auth, validation, ownership (403), terminal status rules
 
-Maintain [AI-NOTES.md](../AI-NOTES.md) after each meaningful session.
+Maintain [AI-NOTES.md](../AI-NOTES.md) as a short GenAI workflow summary if the process changes materially.
 
 ---
 
-**See also:** [Prompt vs result](genai-prompt-vs-result.md) · [Presentation outline](interview-walkthrough.md) · [Agent handoff](../AGENT-HANDOFF.md)
+**See also:** [README validation & corrections](../README.md#validation-and-corrections) · [README demo flow](../README.md#demo-flow)

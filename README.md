@@ -8,9 +8,9 @@ Full-stack submission for the .NET technical interview exercise (PDF v6): a **pe
 |---|---|
 | **Stack** | .NET 10 Web API (Clean Architecture), React 19, SQLite, Identity + JWT |
 | **APIs** | Auth `:5098` (register, login, JWT) · Tasks `:5099` (CRUD, filters, reactivate) |
-| **Tests** | **154** (91 unit + 63 integration); expanded after GenAI scaffold |
+| **Tests** | **159** (95 unit + 64 integration); expanded after GenAI scaffold |
 | **GenAI** | [Prompt](docs/genai-scaffold-prompt.md) · [sample output](#sample-output) · [validation](#validation-and-corrections) · [AI-NOTES](AI-NOTES.md) |
-| **Presentation** | [Suggested outline](docs/interview-walkthrough.md) — story, demo, architecture |
+| **Demo** | [Run locally](#run-locally) · [Demo flow](#demo-flow) (~5 min) |
 
 **Exercise alignment:** two segregated APIs, data + business layers separate from controllers, CRUD with auth, frontend integration, seeded demo users, README setup — plus Kanban workflow, filters, and demo-only password reset beyond the minimal GenAI task-CRUD example.
 
@@ -62,14 +62,14 @@ Auth API owns users (Identity). Tasks API validates the same JWT but never issue
 
 ## Key design decisions
 
-| Topic | Choice | Rationale |
-|-------|--------|-----------|
-| API layout | Auth + Tasks hosts | Matches segregated-API exercise; clear auth vs domain boundary |
-| Persistence | EF Core + migrations | Migrations and LINQ over hand-written SQL for this scope |
-| Kanban rules | Terminal Done/Canceled | Drag in only; `POST /api/tasks/{id}/reactivate` to reopen |
-| Multi-user | Per-user task isolation | Another user's task ID → **403** (not 404) |
-| JWT storage | `localStorage` (demo) | Simple for React + Swagger; HttpOnly cookies preferred in production |
-| Secrets in git | Placeholder in `appsettings.json` | Real `Jwt:Secret` only in gitignored `appsettings.Development.json` |
+Choices worth explaining in the presentation. Exercise requirements (CRUD, auth, per-user data, tests) are covered by the [user story](#user-story), [API reference](#api-reference), and Overview — this table is for **how** the solution is structured and **what** extends the minimal task-CRUD scope.
+
+| Area | Topic | Choice | Rationale |
+|------|-------|--------|-----------|
+| Architecture | Layering | Clean Architecture | Domain entities; `TaskService` + FluentValidation in Application; EF/repos in Infrastructure; thin controllers |
+| Data | Persistence | SQLite + EF Core | Single shared DB for both APIs in demo; migrations for reproducible seed |
+| Frontend | Client | React SPA + Web API | PDF mentions MVC; SPA fits Kanban UX and full-stack CRUD integration |
+| Product | Kanban workflow | Terminal Done/Canceled | Drag into terminal columns; `POST /api/tasks/{id}/reactivate` to reopen — beyond flat task CRUD |
 
 ## Solution layout
 
@@ -77,7 +77,7 @@ Auth API owns users (Identity). Tasks API validates the same JWT but never issue
 src/           # Domain, Application, Infrastructure, Api.Shared, Auth.Api, Tasks.Api
 tests/         # BlaInterview.Unit.Tests + BlaInterview.Integration.Tests
 client/        # React frontend
-docs/          # user stories, GenAI prompt, interview walkthrough — see [Documentation map](#documentation-map)
+docs/          # user stories, GenAI prompt — see [Documentation map](#documentation-map)
 ```
 
 ## Prerequisites
@@ -87,26 +87,38 @@ docs/          # user stories, GenAI prompt, interview walkthrough — see [Docu
 
 ## Configuration (first-time setup)
 
-Copy the example settings so both APIs share the same signing key:
+Copy the example settings so both APIs share the same signing key (PowerShell, from repo root):
 
-```bash
+```powershell
 cd src/BlaInterview.Auth.Api
-cp appsettings.Development.example.json appsettings.Development.json   # PowerShell: Copy-Item ...
+Copy-Item appsettings.Development.example.json appsettings.Development.json
 
-cd ../BlaInterview.Tasks.Api
-cp appsettings.Development.example.json appsettings.Development.json
+cd ..\BlaInterview.Tasks.Api
+Copy-Item appsettings.Development.example.json appsettings.Development.json
 ```
 
 `appsettings.Development.json` is gitignored. Committed `appsettings.json` uses a non-functional placeholder — tokens will not work until both APIs share the same `Jwt:Secret` (≥ 32 characters) via Development settings or `Jwt__Secret` env var. Integration tests inject their own JWT settings and do not need this file.
 
 ## Run locally
 
-Start **Auth API first** (creates users), then **Tasks API** (seeds tasks), then the client.
+Start **Auth API first** (creates users), then **Tasks API** (seeds tasks), then the client. Use **three terminals** (PowerShell, from repo root):
 
-```bash
-cd src/BlaInterview.Auth.Api && dotnet run    # → http://localhost:5098
-cd src/BlaInterview.Tasks.Api && dotnet run   # → http://localhost:5099
-cd client && npm install && npm run dev       # → http://localhost:5173
+```powershell
+# Terminal 1 — Auth API
+cd src/BlaInterview.Auth.Api
+dotnet run
+# → http://localhost:5098
+
+# Terminal 2 — Tasks API
+cd src/BlaInterview.Tasks.Api
+dotnet run
+# → http://localhost:5099
+
+# Terminal 3 — React client (npm install once)
+cd client
+npm install
+npm run dev
+# → http://localhost:5173
 ```
 
 | API | URL | Swagger |
@@ -115,6 +127,45 @@ cd client && npm install && npm run dev       # → http://localhost:5173
 | Tasks | http://localhost:5099 | http://localhost:5099/swagger |
 
 The Vite dev server proxies `/api/auth` → 5098 and `/api/tasks` → 5099.
+
+## Troubleshooting
+
+### Build fails: `MSB3021` / file is locked by `BlaInterview.Auth.Api` or `BlaInterview.Tasks.Api`
+
+Both APIs share the same library projects (`Infrastructure`, `Application`, `Domain`). While either API is running, `dotnet build` cannot overwrite DLLs in `bin\Debug` — **Ctrl+C in the terminal does not always stop the process**.
+
+1. Stop both APIs, then build once:
+
+```powershell
+Get-NetTCPConnection -LocalPort 5098,5099 -ErrorAction SilentlyContinue |
+  ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+
+cd "C:\DEV Proj\BLA_interview"
+dotnet build
+```
+
+2. Start again: **Auth API first**, then Tasks API, then the client.
+
+Do not run `dotnet build` on the solution while the APIs are still listening on 5098 or 5099.
+
+### Login works but tasks fail (**401**)
+
+Both APIs must share the same `Jwt:Secret` (≥ 32 characters). The committed `appsettings.json` uses a placeholder — copy the example file on **both** hosts (see [Configuration](#configuration-first-time-setup)), restart Auth and Tasks. Symptom: login returns a token, but `GET /api/tasks` returns **401**.
+
+### Client cannot reach the API (connection refused / proxy error)
+
+- Confirm Auth is on **http://localhost:5098** and Tasks on **http://localhost:5099** (`GET /api/health` on Auth).
+- Run the React app with **`npm run dev`** (port **5173**) so Vite proxies `/api/auth` and `/api/tasks`.
+
+### Board is empty after sign-in
+
+1. Sign in as **`demo@example.local`** / **`Demo123!`** — not a newly registered user (see [Demo credentials](#demo-credentials)).
+2. Start **Auth API first**, then Tasks API (seeding runs at startup).
+3. Delete `src/BlaInterview.Auth.Api/tasks.db` and restart both APIs if the demo board is stale.
+
+### Pre-filled demo login fails (`Invalid email or password`)
+
+The demo password may have been changed via forgot-password, or the account may be locked after failed attempts. In **Development**, restarting the **Auth API** restores `Demo123!` and clears lockout; otherwise use the password you set or request a new reset link.
 
 ## API reference
 
@@ -151,12 +202,6 @@ Unauthenticated calls to Tasks routes return **401**.
 
 On first start in **Development**, the database is migrated and seeded. The demo account gets **8 tasks** (2 To Do, 2 In Progress, 1 On Hold, 1 In Review, 1 Completed, 1 Cancelled). New registrations start with an **empty board**. Login form is pre-filled with demo credentials.
 
-**If you don't see cards:**
-
-1. Sign in as **`demo@example.local`** / **`Demo123!`** — not a newly registered user.
-2. Restart both APIs after pulling changes (seeding runs at startup).
-3. Delete `src/BlaInterview.Auth.Api/tasks.db` and restart both APIs if the demo board is stale.
-
 **403 ownership check:** Log in as demo in Swagger, copy a task ID from `other@example.local`'s list, call `GET /api/tasks/{id}` with demo's token → **403**. Covered by `TaskOwnershipTests`.
 
 ### Password reset (demo only)
@@ -167,18 +212,31 @@ For the interview demo, when the email **exists**, the API includes `resetLink` 
 
 Try it: Sign in page → **Forgot password?** → `demo@example.local` → open reset link → set a new password → sign in.
 
+## Demo flow (~5 min)
+
+Suggested order for a live presentation or smoke test:
+
+1. **Sign in** as demo user → **8 seeded tasks** across columns.
+2. **Kanban** — drag between active columns; drop into Done/Canceled; **Move to To Do** (reactivate) on terminal cards.
+3. **CRUD** — create, edit, delete a task (validation on save).
+4. **Filters** — search by title, filter by status and dates.
+5. **Optional** — register a second user → empty board (per-user data).
+6. **Optional** — Swagger: login on Auth API → Authorize with JWT → `GET /api/tasks` on Tasks API.
+
+Ownership and auth behavior (403 / 401 / terminal rules) are in [user-stories.md](docs/user-stories.md) (S2, S5, S6) — demonstrate only if the panel asks.
+
 ## Tests
 
-```bash
+```powershell
 dotnet test
 ```
 
-**Last verified:** **154 pass** — 91 unit + 63 integration.
+**Last verified:** **159 pass** — 95 unit + 64 integration.
 
 | Assembly | Focus |
 |----------|--------|
 | `BlaInterview.Unit.Tests` | Domain, services, validators, notifications, mapper, auth/JWT, exception handler |
-| `BlaInterview.Integration.Tests` | Dual-host WAF (Auth + Tasks factories), repository, ownership, filters |
+| `BlaInterview.Integration.Tests` | Dual-host WAF (Auth + Tasks factories), repository, ownership, filters, password reset |
 
 Filter by trait: `dotnet test --filter "Category=Task Service"`. Optional coverage: `dotnet test --collect:"XPlat Code Coverage"`.
 
@@ -186,7 +244,7 @@ Filter by trait: `dotnet test --filter "Category=Task Service"`. Optional covera
 
 **Frontend** (`client/`):
 
-```bash
+```powershell
 cd client
 npm run lint        # oxlint (correctness, React, TypeScript, a11y, import)
 npm run lint:fix    # auto-fix where supported
@@ -215,7 +273,7 @@ Build a personal Kanban task API in ASP.NET Core using Clean Architecture.
 - Per-user isolation; terminal Done/Canceled with reactivate endpoint
 ```
 
-Full prompt: [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md). Deviations from prompt: [docs/genai-prompt-vs-result.md](docs/genai-prompt-vs-result.md).
+Full prompt: [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md).
 
 ### Sample output
 
@@ -243,25 +301,49 @@ public class TasksController : BaseController
 }
 ```
 
-Full API contract and domain rules: [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md). Story acceptance criteria: [docs/user-stories.md](docs/user-stories.md).
-
 ### Validation and corrections
 
-- `dotnet build`, `dotnet test` (**154 pass**), `npm run build`, manual smoke on Kanban flows
-- **JWT 401 fix** — Identity cookie overrode Bearer; set default scheme to JWT Bearer
-- **Enum JSON fix** — added `JsonStringEnumConverter` (API returned `0`–`5`, UI expected `"Todo"`)
-- Other: SQLite `DateTimeOffset` sort in memory; `KanbanStatus` rename; Auth/Tasks split
+The saved prompt is the Phase 1 spec in [genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md). Below: how output was validated, what diverged from the prompt, and how edge cases / auth / validation were handled.
 
-Session log: [AI-NOTES.md](AI-NOTES.md).
+**How we validated AI output**
+
+- `dotnet build` and `dotnet test` (**159 pass**) — unit + dual-host integration (Auth + Tasks WebApplicationFactory)
+- `npm run verify` and `npm run build` on the React client
+- Manual smoke: login, CRUD, drag-and-drop, reactivate, filters, 403 on another user's task ([demo flow](#demo-flow))
+- Acceptance criteria in [user-stories.md](docs/user-stories.md) (S1–S7)
+
+**Prompt vs as-built** (intentional deviations)
+
+| Prompt / spec | As built | Why it changed |
+|---------------|----------|----------------|
+| Single `BlaInterview.Api` host | `Auth.Api` (:5098) + `Tasks.Api` (:5099) + `Api.Shared` | Segregated auth and task APIs per interview exercise |
+| Manual mapper (early scaffold) | AutoMapper `TaskProfile` | Replaced manual mapper after LessonsManagement alignment |
+| 4 test projects (Domain, Application, Infrastructure, Api) | 2 assemblies (`Unit.Tests`, `Integration.Tests`) | LessonsManagement pattern; Moq.AutoMock + Bogus |
+| `TaskStatus` enum | `KanbanStatus` | Name clash with `System.Threading.Tasks.TaskStatus` |
+| Identity + JWT (both registered) | JWT as default authenticate/challenge scheme | AI scaffold left Identity cookie as default → 401 on protected routes |
+| Enum serialization (unspecified) | `JsonStringEnumConverter` + client `normalizeTask()` | API returned `0`–`5`; UI grouped by `"Todo"` → empty board |
+| Repository sort via LINQ | In-memory sort for `DateTimeOffset` | SQLite does not support `ORDER BY` on `DateTimeOffset` |
+
+Kanban columns, priorities, due dates, filters (S7), terminal Done/Canceled rules, reactivate endpoint, per-user isolation (403), and JWT auth **match the agreed prompt**. Deviations are mostly structure, tooling, and fixes found during validation.
+
+**Edge cases, auth, and validation** (not left to AI defaults)
+
+| Area | Approach |
+|------|----------|
+| Auth | Identity + JWT Bearer; 401 without token; logout clears `localStorage` |
+| Ownership | Task endpoints scoped by `userId`; another user's task → **403**; missing id → **404** |
+| Validation | FluentValidation in Application (`CreateTaskBody`, `UpdateTaskBody`, filters, auth DTOs) |
+| Terminal status | Done/Canceled: drag in only; status change via update blocked; `POST /reactivate` → Todo |
+| Due dates | Past due rejected on create; update rules allow unchanged historical due dates |
+| Filters | Invalid date range or page size → **400**; non-matching cards hidden while filtered |
+
+Workflow preview (how AI was used): [AI-NOTES.md](AI-NOTES.md).
 
 ## Documentation map
 
 | Document | Purpose |
 |----------|---------|
-| [README.md](README.md) | Setup, API overview, design decisions |
-| [docs/interview-walkthrough.md](docs/interview-walkthrough.md) | Presentation outline (demo + architecture) |
+| [README.md](README.md) | Setup, API overview, demo flow, design decisions |
 | [docs/user-stories.md](docs/user-stories.md) | S1–S7 acceptance criteria |
 | [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md) | Full GenAI prompt |
-| [docs/genai-prompt-vs-result.md](docs/genai-prompt-vs-result.md) | Prompt vs as-built delta |
-| [AI-NOTES.md](AI-NOTES.md) | AI session log (what changed and why) |
-| [AGENT-HANDOFF.md](AGENT-HANDOFF.md) | Operational context for continued development |
+| [AI-NOTES.md](AI-NOTES.md) | GenAI workflow preview (how AI was used) |
