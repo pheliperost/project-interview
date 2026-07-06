@@ -2,6 +2,17 @@
 
 Personal Kanban task board built with **Clean Architecture** (.NET) and **React 19**.
 
+## How this maps to the BLA exercise (PDF v6)
+
+- **User story & demo** — informal narrative below + [live script](docs/interview-walkthrough.md)
+- **Two APIs** — Auth (`:5098`) issues JWT; Tasks (`:5099`) CRUD + ownership (**403**)
+- **Clean Architecture** — Domain → Application (rules/validation) → Infrastructure (EF) → API hosts
+- **Tests** — **154** (91 unit + 63 integration); expanded after GenAI scaffold, not full TDD on every story
+- **GenAI deliverables** — [prompt](docs/genai-scaffold-prompt.md), [sample output](#sample-output), [validation & fixes](#validation-and-corrections)
+- **Beyond PDF minimum** — six-column Kanban, search/filters, reactivate; password reset is demo-only (no email)
+
+> **Interview demo:** [docs/interview-walkthrough.md](docs/interview-walkthrough.md)
+
 ## At a glance
 
 - **Product:** Six-column Kanban — drag-and-drop, priorities, due dates, search/filters, terminal Done/Canceled with reactivate
@@ -242,7 +253,7 @@ Full API contract and domain rules: [docs/genai-scaffold-prompt.md](docs/genai-s
 
 ### Validation and corrections
 
-- `dotnet build`, `dotnet test` (105), `npm run build`, manual smoke on Kanban flows
+- `dotnet build`, `dotnet test` (**154 pass**), `npm run build`, manual smoke on Kanban flows
 - **JWT 401 fix** — Identity cookie overrode Bearer; set default scheme to JWT Bearer
 - **Enum JSON fix** — added `JsonStringEnumConverter` (API returned `0`–`5`, UI expected `"Todo"`)
 - Other: SQLite `DateTimeOffset` sort in memory; `KanbanStatus` rename; Auth/Tasks split

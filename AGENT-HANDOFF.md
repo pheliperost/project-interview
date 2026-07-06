@@ -84,7 +84,7 @@ npm run dev
 - Requires .NET 10 SDK (`net10.0`).
 - **PowerShell:** chain commands with `;`, not `&&`.
 
-**Last verified:** `dotnet test` (**105 pass** — 60 unit + 45 integration), `client/` `npm run build` (pass), `client/` `npm run verify` (pass).
+**Last verified:** `dotnet test` (**154 pass** — 91 unit + 63 integration), `client/` `npm run build` (pass), `client/` `npm run verify` (pass).
 
 **Lint:** `client/` — `npm run verify` (oxlint + `tsc`). Backend — `.editorconfig` + `Directory.Build.props` (NET analyzers).
 

@@ -104,7 +104,7 @@ Highlights to mention:
 | API errors | Global `IExceptionHandler` → `{ error: "..." }` |
 | Layer boundary | `TaskFilterRequest` (HTTP) → `TaskQuery` (persistence) |
 | Pagination | `GET /api/tasks` returns `{ items, totalCount, page, pageSize }` |
-| Tests | **79** — 42 unit (Moq.AutoMock) + 37 integration (dual WAF, cross-API JWT, 403 ownership) |
+| Tests | **154** — 91 unit (Moq.AutoMock) + 63 integration (dual WAF, cross-API JWT, 403 ownership) |
 | CI | GitHub Actions — `dotnet test` + `npm run build` |
 
 **PDF “ASP.NET MVC”:** Web API + React SPA (PDF also requires a JS frontend — intentional tradeoff).

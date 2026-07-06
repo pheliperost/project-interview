@@ -167,8 +167,9 @@ As a professional managing my own work, I want a secure personal Kanban board wh
 - Comments, attachments, and progress bars on cards
 - Calendar view (sidebar nav stub OK; no implementation)
 - External identity providers (Clerk, Auth0)
-- Strict status transition matrix
-- Search in task description (title only)
+- Sending password reset links by email (v1 uses demo reset link in API/UI — see README)
+
+> **Note:** Status changes follow S5/S6 (free drag among active columns; terminal columns require reactivate). Search/filter is title-only per S7 — description is not searched.
 
 ---
 
