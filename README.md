@@ -6,7 +6,7 @@ Full-stack submission for the .NET technical interview exercise (PDF v6): a **pe
 
 | | |
 |---|---|
-| **Stack** | .NET 10 Web API (Clean Architecture), React 19, SQLite, Identity + JWT |
+| **Stack** | .NET 10, ASP.NET Web API (Clean Architecture), SQLite, EF Core, Identity + JWT, FluentValidation, React 19, Vite, TanStack Query, xUnit |
 | **APIs** | Auth `:5098` (register, login, JWT) · Tasks `:5099` (CRUD, filters, reactivate) |
 | **Tests** | **159** (95 unit + 64 integration); expanded after GenAI scaffold |
 | **GenAI** | [Prompt](docs/genai-scaffold-prompt.md) · [sample output](#sample-output) · [validation](#validation-and-corrections) · [AI-NOTES](AI-NOTES.md) |
@@ -33,17 +33,6 @@ Full-stack submission for the .NET technical interview exercise (PDF v6): a **pe
 | S7 | Search and filter | Sidebar filters; non-matching cards hidden while filtered |
 
 Full acceptance criteria for each story: [docs/user-stories.md](docs/user-stories.md) (optional deep-dive for reviewers).
-
-## Stack
-
-| Layer | Technology |
-|-------|------------|
-| Backend | .NET 10, ASP.NET Web API, Clean Architecture |
-| Database | SQLite, EF Core, migrations |
-| Auth | ASP.NET Core Identity + JWT (localStorage for demo) |
-| Validation | FluentValidation |
-| Tests | xUnit, Moq, WebApplicationFactory |
-| Frontend | React 19, Vite, TypeScript, TanStack Query, Tailwind, @dnd-kit |
 
 ## How the APIs work together
 
@@ -77,7 +66,7 @@ Choices worth explaining in the presentation. Exercise requirements (CRUD, auth,
 src/           # Domain, Application, Infrastructure, Api.Shared, Auth.Api, Tasks.Api
 tests/         # BlaInterview.Unit.Tests + BlaInterview.Integration.Tests
 client/        # React frontend
-docs/          # user stories, GenAI prompt — see [Documentation map](#documentation-map)
+docs/          # user stories, GenAI prompt, troubleshooting — see [Documentation map](#documentation-map)
 ```
 
 ## Prerequisites
@@ -128,44 +117,7 @@ npm run dev
 
 The Vite dev server proxies `/api/auth` → 5098 and `/api/tasks` → 5099.
 
-## Troubleshooting
-
-### Build fails: `MSB3021` / file is locked by `BlaInterview.Auth.Api` or `BlaInterview.Tasks.Api`
-
-Both APIs share the same library projects (`Infrastructure`, `Application`, `Domain`). While either API is running, `dotnet build` cannot overwrite DLLs in `bin\Debug` — **Ctrl+C in the terminal does not always stop the process**.
-
-1. Stop both APIs, then build once:
-
-```powershell
-Get-NetTCPConnection -LocalPort 5098,5099 -ErrorAction SilentlyContinue |
-  ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
-
-cd "C:\DEV Proj\BLA_interview"
-dotnet build
-```
-
-2. Start again: **Auth API first**, then Tasks API, then the client.
-
-Do not run `dotnet build` on the solution while the APIs are still listening on 5098 or 5099.
-
-### Login works but tasks fail (**401**)
-
-Both APIs must share the same `Jwt:Secret` (≥ 32 characters). The committed `appsettings.json` uses a placeholder — copy the example file on **both** hosts (see [Configuration](#configuration-first-time-setup)), restart Auth and Tasks. Symptom: login returns a token, but `GET /api/tasks` returns **401**.
-
-### Client cannot reach the API (connection refused / proxy error)
-
-- Confirm Auth is on **http://localhost:5098** and Tasks on **http://localhost:5099** (`GET /api/health` on Auth).
-- Run the React app with **`npm run dev`** (port **5173**) so Vite proxies `/api/auth` and `/api/tasks`.
-
-### Board is empty after sign-in
-
-1. Sign in as **`demo@example.local`** / **`Demo123!`** — not a newly registered user (see [Demo credentials](#demo-credentials)).
-2. Start **Auth API first**, then Tasks API (seeding runs at startup).
-3. Delete `src/BlaInterview.Auth.Api/tasks.db` and restart both APIs if the demo board is stale.
-
-### Pre-filled demo login fails (`Invalid email or password`)
-
-The demo password may have been changed via forgot-password, or the account may be locked after failed attempts. In **Development**, restarting the **Auth API** restores `Demo123!` and clears lockout; otherwise use the password you set or request a new reset link.
+Issues? See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ## API reference
 
@@ -201,6 +153,12 @@ Unauthenticated calls to Tasks routes return **401**.
 | Secondary | `other@example.local` | `Other123!` | 4 tasks + 403 ownership demo |
 
 On first start in **Development**, the database is migrated and seeded. The demo account gets **8 tasks** (2 To Do, 2 In Progress, 1 On Hold, 1 In Review, 1 Completed, 1 Cancelled). New registrations start with an **empty board**. Login form is pre-filled with demo credentials.
+
+**If the board is empty after sign-in:**
+
+1. Sign in as **`demo@example.local`** / **`Demo123!`** — not a newly registered user.
+2. Start **Auth API first**, then Tasks API (seeding runs at startup).
+3. Delete `src/BlaInterview.Auth.Api/tasks.db` and restart both APIs if the demo board is stale.
 
 **403 ownership check:** Log in as demo in Swagger, copy a task ID from `other@example.local`'s list, call `GET /api/tasks/{id}` with demo's token → **403**. Covered by `TaskOwnershipTests`.
 
@@ -240,21 +198,7 @@ dotnet test
 
 Filter by trait: `dotnet test --filter "Category=Task Service"`. Optional coverage: `dotnet test --collect:"XPlat Code Coverage"`.
 
-## Lint and static analysis
-
-**Frontend** (`client/`):
-
-```powershell
-cd client
-npm run lint        # oxlint (correctness, React, TypeScript, a11y, import)
-npm run lint:fix    # auto-fix where supported
-npm run typecheck   # tsc -b
-npm run verify      # typecheck + lint
-```
-
-**Backend** (repo root): `Directory.Build.props` enables .NET analyzers (`AnalysisLevel=latest`, `AnalysisMode=Recommended`). Style rules live in `.editorconfig`.
-
-CI runs `dotnet build`, `dotnet test`, `npm run verify`, and `npm run build` on every push/PR.
+Lint: `cd client; npm run verify` (oxlint + TypeScript). CI runs `dotnet build`, `dotnet test`, `npm run verify`, and `npm run build` on every push/PR.
 
 ## GenAI workflow
 
@@ -317,8 +261,8 @@ The saved prompt is the Phase 1 spec in [genai-scaffold-prompt.md](docs/genai-sc
 | Prompt / spec | As built | Why it changed |
 |---------------|----------|----------------|
 | Single `BlaInterview.Api` host | `Auth.Api` (:5098) + `Tasks.Api` (:5099) + `Api.Shared` | Segregated auth and task APIs per interview exercise |
-| Manual mapper (early scaffold) | AutoMapper `TaskProfile` | Replaced manual mapper after LessonsManagement alignment |
-| 4 test projects (Domain, Application, Infrastructure, Api) | 2 assemblies (`Unit.Tests`, `Integration.Tests`) | LessonsManagement pattern; Moq.AutoMock + Bogus |
+| Manual mapper (early scaffold) | AutoMapper `TaskProfile` | Replaced manual mapper for maintainability |
+| 4 test projects (Domain, Application, Infrastructure, Api) | 2 assemblies (`Unit.Tests`, `Integration.Tests`) | Simpler layout; Moq.AutoMock + Bogus |
 | `TaskStatus` enum | `KanbanStatus` | Name clash with `System.Threading.Tasks.TaskStatus` |
 | Identity + JWT (both registered) | JWT as default authenticate/challenge scheme | AI scaffold left Identity cookie as default → 401 on protected routes |
 | Enum serialization (unspecified) | `JsonStringEnumConverter` + client `normalizeTask()` | API returned `0`–`5`; UI grouped by `"Todo"` → empty board |
@@ -346,4 +290,5 @@ Workflow preview (how AI was used): [AI-NOTES.md](AI-NOTES.md).
 | [README.md](README.md) | Setup, API overview, demo flow, design decisions |
 | [docs/user-stories.md](docs/user-stories.md) | S1–S7 acceptance criteria |
 | [docs/genai-scaffold-prompt.md](docs/genai-scaffold-prompt.md) | Full GenAI prompt |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common local setup issues |
 | [AI-NOTES.md](AI-NOTES.md) | GenAI workflow preview (how AI was used) |
